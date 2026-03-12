@@ -141,6 +141,3 @@ function boilerplate_editor_assets() {
 }
 add_action( 'enqueue_block_editor_assets', 'boilerplate_editor_assets' );
 
-// Include additional files from /inc/ as needed
-// require get_template_directory() . '/inc/custom-post-types.php';
-// require get_template_directory() . '/inc/custom-taxonomies.php';
