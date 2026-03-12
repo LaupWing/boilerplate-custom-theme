@@ -83,32 +83,6 @@ function boilerplate_scripts()
 }
 add_action('wp_enqueue_scripts', 'boilerplate_scripts');
 
-/**
- * Register widget areas.
- */
-function boilerplate_widgets_init()
-{
-    register_sidebar(array(
-        'name'          => __('Sidebar', 'boilerplate'),
-        'id'            => 'sidebar-1',
-        'description'   => __('Add widgets here.', 'boilerplate'),
-        'before_widget' => '<section id="%1$s" class="widget %2$s">',
-        'after_widget'  => '</section>',
-        'before_title'  => '<h2 class="widget-title">',
-        'after_title'   => '</h2>',
-    ));
-
-    register_sidebar(array(
-        'name'          => __('Footer Widget Area', 'boilerplate'),
-        'id'            => 'footer-1',
-        'description'   => __('Add footer widgets here.', 'boilerplate'),
-        'before_widget' => '<section id="%1$s" class="widget %2$s">',
-        'after_widget'  => '</section>',
-        'before_title'  => '<h2 class="widget-title">',
-        'after_title'   => '</h2>',
-    ));
-}
-add_action('widgets_init', 'boilerplate_widgets_init');
 
 /**
  * Register custom Gutenberg blocks.
