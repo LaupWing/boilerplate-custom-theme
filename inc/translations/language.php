@@ -276,3 +276,116 @@ function bp_resolve_translated_page_slug($query_vars)
     return $query_vars;
 }
 add_filter('request', 'bp_resolve_translated_page_slug');
+
+// ---------------------------------------------------------------------------
+// URL Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Add the current language prefix to any internal URL.
+ *
+ * Usage in templates:
+ *   <a href="<?php echo bp_url('/contact/'); ?>">Contact</a>
+ *
+ * If current lang is 'en': returns /en/contact/
+ * If current lang is 'nl' (default): returns /contact/ (no prefix)
+ *
+ * @param string $url Relative URL (e.g., '/contact/' or '/producten/my-item/')
+ * @return string
+ */
+function bp_url($url)
+{
+    $lang = bp_get_lang();
+
+    if ($lang === bp_get_default_lang()) {
+        return $url;
+    }
+
+    // Ensure leading slash
+    $url = '/' . ltrim($url, '/');
+
+    return '/' . $lang . $url;
+}
+
+/**
+ * Get the URL for switching to a different language on the current page.
+ *
+ * Used in the language switcher. Figures out what the current page is
+ * and builds the URL for the target language.
+ *
+ * @param string $target_lang Language code to switch to (e.g., 'en')
+ * @return string Full URL for that language
+ */
+function bp_lang_url($target_lang)
+{
+    $default = bp_get_default_lang();
+
+    // Front page
+    if (is_front_page()) {
+        if ($target_lang === $default) {
+            return home_url('/');
+        }
+        return home_url('/' . $target_lang . '/');
+    }
+
+    // Single page
+    if (is_page()) {
+        $page = get_queried_object();
+
+        if ($target_lang === $default) {
+            // Default language — use the real WordPress slug
+            return home_url('/' . $page->post_name . '/');
+        }
+
+        // Check if this page has a translated slug
+        $translated_slug = get_post_meta($page->ID, '_slug_' . $target_lang, true);
+        $slug = $translated_slug ?: $page->post_name;
+
+        return home_url('/' . $target_lang . '/' . $slug . '/');
+    }
+
+    // Single CPT post
+    if (is_singular()) {
+        $post     = get_queried_object();
+        $cpt_slug = $post->post_type;
+        $cpt_slugs = bp_get_cpt_slugs_config();
+
+        if ($target_lang === $default) {
+            return home_url('/' . $cpt_slug . '/' . $post->post_name . '/');
+        }
+
+        // Use translated CPT slug if available
+        $archive_slug = $cpt_slugs[$cpt_slug][$target_lang] ?? $cpt_slug;
+
+        return home_url('/' . $target_lang . '/' . $archive_slug . '/' . $post->post_name . '/');
+    }
+
+    // CPT archive
+    if (is_post_type_archive()) {
+        $cpt_slug  = get_queried_object()->name;
+        $cpt_slugs = bp_get_cpt_slugs_config();
+
+        if ($target_lang === $default) {
+            return home_url('/' . $cpt_slug . '/');
+        }
+
+        $archive_slug = $cpt_slugs[$cpt_slug][$target_lang] ?? $cpt_slug;
+
+        return home_url('/' . $target_lang . '/' . $archive_slug . '/');
+    }
+
+    // Fallback: just prefix the current path
+    $path = wp_parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+    // Strip existing language prefix if present
+    $current_lang = bp_get_lang();
+    if ($current_lang !== $default) {
+        $path = preg_replace('#^/' . $current_lang . '/#', '/', $path);
+    }
+
+    if ($target_lang === $default) {
+        return home_url($path);
+    }
+
+    return home_url('/' . $target_lang . rtrim($path, '/') . '/');
+}
