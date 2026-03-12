@@ -389,3 +389,101 @@ function bp_lang_url($target_lang)
 
     return home_url('/' . $target_lang . rtrim($path, '/') . '/');
 }
+
+// ---------------------------------------------------------------------------
+// Translation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Translate a static theme string.
+ *
+ * Usage in templates:
+ *   <h1><?php echo bp__('Welkom'); ?></h1>
+ *   // Outputs "Welcome" if lang=en
+ *
+ * Lookup order:
+ *   1. Database (wp_option 'bp_theme_translations') — admin can override
+ *   2. File (inc/translations/translations.php) — developer defaults
+ *   3. Original text — returns the Dutch key as-is
+ *
+ * @param string $text The default-language (Dutch) text.
+ * @return string Translated text, or original if no translation found.
+ */
+function bp__($text)
+{
+    $lang = bp_get_lang();
+
+    // Default language — return as-is
+    if ($lang === bp_get_default_lang()) {
+        return $text;
+    }
+
+    // 1. Check database
+    $db_translations = get_option('bp_theme_translations', []);
+    if (! empty($db_translations[$text][$lang])) {
+        return $db_translations[$text][$lang];
+    }
+
+    // 2. Check file
+    static $file_translations = null;
+    if ($file_translations === null) {
+        $file = get_template_directory() . '/inc/translations/translations.php';
+        $grouped = file_exists($file) ? require $file : [];
+
+        // Flatten grouped array: ['Section' => ['key' => ['en' => 'val']]] → ['key' => ['en' => 'val']]
+        $file_translations = [];
+        foreach ($grouped as $section => $strings) {
+            foreach ($strings as $key => $translations) {
+                $file_translations[$key] = $translations;
+            }
+        }
+    }
+
+    if (! empty($file_translations[$text][$lang])) {
+        return $file_translations[$text][$lang];
+    }
+
+    // 3. Fallback — return original
+    return $text;
+}
+
+/**
+ * Extract the current language value from a multilingual value.
+ *
+ * Used for data that's stored as {nl: '...', en: '...'}
+ * like block attributes or custom field values.
+ *
+ * @param mixed $val A multilingual array or a plain string.
+ * @return string The value for the current language.
+ */
+function bp_val($val)
+{
+    if (! is_array($val)) {
+        return $val ?: '';
+    }
+
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
+
+    // Try current language, fall back to default
+    return $val[$lang] ?? $val[$default] ?? '';
+}
+
+/**
+ * Get a translated block attribute value.
+ *
+ * Shorthand for reading a key from the block's $attributes array
+ * and extracting the current language.
+ *
+ * Usage in render.php:
+ *   $heading = bp_attr($attributes, 'heading');
+ *
+ * @param array  $attributes Block attributes array.
+ * @param string $key        The attribute key.
+ * @return string The translated value.
+ */
+function bp_attr($attributes, $key)
+{
+    $val = $attributes[$key] ?? '';
+    return bp_val($val);
+}
