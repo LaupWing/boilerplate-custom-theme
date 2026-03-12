@@ -121,3 +121,13 @@ function boilerplate_editor_assets()
     }
 }
 add_action('enqueue_block_editor_assets', 'boilerplate_editor_assets');
+
+/**
+ * Hide unused admin menu items (Customizer, Site Editor).
+ */
+function boilerplate_clean_admin_menu()
+{
+    remove_submenu_page('themes.php', 'customize.php');
+    remove_submenu_page('themes.php', 'site-editor.php');
+}
+add_action('admin_menu', 'boilerplate_clean_admin_menu');
