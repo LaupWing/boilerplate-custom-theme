@@ -225,3 +225,54 @@ function bp_lang_prevent_canonical_redirect($redirect_url)
     return $redirect_url;
 }
 add_filter('redirect_canonical', 'bp_lang_prevent_canonical_redirect');
+
+// ---------------------------------------------------------------------------
+// Dynamic Page Slug Translations (from post meta)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve translated page slugs to their actual WordPress page.
+ *
+ * When a user visits /en/about-us/, the catch-all rewrite rule sets
+ * pagename=about-us. But the actual WordPress page slug is "over-ons".
+ *
+ * This hook checks: is "about-us" a translated slug stored in post meta?
+ * If yes, swap the pagename to the real slug so WordPress finds the page.
+ *
+ * Post meta key format: _slug_{lang} (e.g., _slug_en = "about-us")
+ */
+function bp_resolve_translated_page_slug($query_vars)
+{
+    $lang = $query_vars['lang'] ?? '';
+
+    // Only for non-default languages
+    if (! $lang || $lang === bp_get_default_lang()) {
+        return $query_vars;
+    }
+
+    // Only if a pagename is set (catch-all rule)
+    if (empty($query_vars['pagename'])) {
+        return $query_vars;
+    }
+
+    $requested_slug = $query_vars['pagename'];
+
+    // Look up: is there a page with _slug_{lang} = this slug?
+    $pages = get_posts([
+        'post_type'      => 'page',
+        'post_status'    => 'publish',
+        'meta_key'       => '_slug_' . $lang,
+        'meta_value'     => $requested_slug,
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+    ]);
+
+    if (! empty($pages)) {
+        // Found it — swap pagename to the real WordPress slug
+        $real_page = get_post($pages[0]);
+        $query_vars['pagename'] = $real_page->post_name;
+    }
+
+    return $query_vars;
+}
+add_filter('request', 'bp_resolve_translated_page_slug');
