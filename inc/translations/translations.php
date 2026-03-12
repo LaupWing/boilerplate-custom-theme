@@ -21,11 +21,15 @@ return [
     ],
 
     'General' => [
-        'Lees meer'  => ['en' => 'Read more'],
-        'Zoeken'     => ['en' => 'Search'],
-        'Sluiten'    => ['en' => 'Close'],
-        'Verzenden'  => ['en' => 'Submit'],
-        'Terug'      => ['en' => 'Back'],
+        'Lees meer'                => ['en' => 'Read more'],
+        'Zoeken'                   => ['en' => 'Search'],
+        'Sluiten'                  => ['en' => 'Close'],
+        'Verzenden'                => ['en' => 'Submit'],
+        'Terug'                    => ['en' => 'Back'],
+        'Geen resultaten gevonden.' => ['en' => 'No results found.'],
+        'Pagina niet gevonden.'    => ['en' => 'Page not found.'],
+        'Terug naar home'          => ['en' => 'Back to home'],
+        'Zoekresultaten voor:'     => ['en' => 'Search results for:'],
     ],
 
     'Footer' => [
