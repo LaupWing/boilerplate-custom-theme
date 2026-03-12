@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "boilerplate/content-section",
+  "version": "1.0.0",
+  "title": "Content Section",
+  "category": "theme",
+  "description": "Flexible content section with InnerBlocks and multilingual support.",
+  "textdomain": "boilerplate",
+  "supports": {
+    "align": ["full", "wide"],
+    "html": false
+  },
+  "attributes": {
+    "contentTranslations": {
+      "type": "object",
+      "default": {}
+    },
+    "bgMode": {
+      "type": "string",
+      "default": "white"
+    }
+  },
+  "editorScript": "file:./index.js",
+  "render": "file:./render.php"
+}
