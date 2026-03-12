@@ -1,0 +1,30 @@
+{
+  "name": "boilerplate-custom-theme",
+  "version": "1.0.0",
+  "description": "Custom WordPress theme boilerplate with Tailwind CSS and custom Gutenberg blocks",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/index.css -o ./build/index.css --minify",
+    "watch:css": "tailwindcss -i ./src/index.css -o ./build/index.css --watch",
+    "build:blocks": "wp-scripts build --webpack-copy-php --webpack-src-dir=src/blocks --output-path=build/blocks",
+    "start:blocks": "wp-scripts start --webpack-copy-php --webpack-src-dir=src/blocks --output-path=build/blocks",
+    "build": "npm run build:css && npm run build:blocks",
+    "start": "npm run watch:css & npm run start:blocks"
+  },
+  "keywords": [
+    "wordpress",
+    "theme",
+    "tailwind",
+    "gutenberg",
+    "blocks"
+  ],
+  "author": "Loc Nguyen",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "@wordpress/scripts": "^27.9.0",
+    "tailwindcss": "^3.4.0"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.19"
+  }
+}
