@@ -522,3 +522,104 @@ function bp_hreflang_tags()
     echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($default_url) . '" />' . "\n";
 }
 add_action('wp_head', 'bp_hreflang_tags');
+
+// ---------------------------------------------------------------------------
+// Page Slug Meta Box
+// ---------------------------------------------------------------------------
+
+/**
+ * Register the translated slugs meta box on the page editor.
+ */
+function bp_slug_meta_box()
+{
+    add_meta_box(
+        'bp_translated_slugs',
+        'Translated URL Slugs',
+        'bp_slug_meta_box_html',
+        'page',
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'bp_slug_meta_box');
+
+/**
+ * Render the translated slugs meta box.
+ *
+ * Shows one input field per non-default language.
+ * The label shows a preview of what the full URL will look like.
+ */
+function bp_slug_meta_box_html($post)
+{
+    $langs   = bp_get_supported_langs();
+    $default = bp_get_default_lang();
+
+    wp_nonce_field('bp_save_slugs', 'bp_slugs_nonce');
+
+    echo '<p class="description">Leave empty to use the Dutch slug in all languages.</p>';
+
+    foreach ($langs as $lang) {
+        if ($lang === $default) {
+            continue;
+        }
+
+        $config = bp_get_languages_config();
+        $label  = $config[$lang]['label'] ?? strtoupper($lang);
+        $value  = get_post_meta($post->ID, '_slug_' . $lang, true);
+
+        echo '<p>';
+        echo '<label for="bp_slug_' . esc_attr($lang) . '">';
+        echo '<strong>' . esc_html($label) . '</strong>';
+        echo ' <code>/' . esc_html($lang) . '/</code>';
+        echo '</label><br>';
+        echo '<input type="text" id="bp_slug_' . esc_attr($lang) . '" ';
+        echo 'name="bp_slug_' . esc_attr($lang) . '" ';
+        echo 'value="' . esc_attr($value) . '" ';
+        echo 'placeholder="' . esc_attr($post->post_name) . '" ';
+        echo 'style="width:100%;" />';
+        echo '</p>';
+    }
+}
+
+/**
+ * Save the translated slugs when the page is saved.
+ */
+function bp_save_slug_meta($post_id)
+{
+    // Verify nonce
+    if (! isset($_POST['bp_slugs_nonce']) || ! wp_verify_nonce($_POST['bp_slugs_nonce'], 'bp_save_slugs')) {
+        return;
+    }
+
+    // Don't save on autosave
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    // Check permissions
+    if (! current_user_can('edit_page', $post_id)) {
+        return;
+    }
+
+    $langs   = bp_get_supported_langs();
+    $default = bp_get_default_lang();
+
+    foreach ($langs as $lang) {
+        if ($lang === $default) {
+            continue;
+        }
+
+        $key = 'bp_slug_' . $lang;
+
+        if (isset($_POST[$key])) {
+            $slug = sanitize_title($_POST[$key]);
+
+            if ($slug) {
+                update_post_meta($post_id, '_slug_' . $lang, $slug);
+            } else {
+                delete_post_meta($post_id, '_slug_' . $lang);
+            }
+        }
+    }
+}
+add_action('save_post_page', 'bp_save_slug_meta');
