@@ -487,3 +487,38 @@ function bp_attr($attributes, $key)
     $val = $attributes[$key] ?? '';
     return bp_val($val);
 }
+
+// ---------------------------------------------------------------------------
+// SEO: hreflang Tags
+// ---------------------------------------------------------------------------
+
+/**
+ * Output hreflang tags in the <head> for all supported languages.
+ *
+ * Tells search engines: "this page exists in these languages at these URLs."
+ *
+ * Outputs something like:
+ *   <link rel="alternate" hreflang="nl" href="https://example.com/over-ons/" />
+ *   <link rel="alternate" hreflang="en" href="https://example.com/en/about-us/" />
+ *   <link rel="alternate" hreflang="x-default" href="https://example.com/over-ons/" />
+ */
+function bp_hreflang_tags()
+{
+    $langs   = bp_get_supported_langs();
+    $default = bp_get_default_lang();
+    $config  = bp_get_languages_config();
+
+    foreach ($langs as $lang) {
+        $url    = bp_lang_url($lang);
+        $locale = $config[$lang]['locale'] ?? $lang;
+        // hreflang uses short codes like "nl", "en", or full like "en-US"
+        $hreflang = substr($locale, 0, 2);
+
+        echo '<link rel="alternate" hreflang="' . esc_attr($hreflang) . '" href="' . esc_url($url) . '" />' . "\n";
+    }
+
+    // x-default points to the default language version
+    $default_url = bp_lang_url($default);
+    echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($default_url) . '" />' . "\n";
+}
+add_action('wp_head', 'bp_hreflang_tags');
