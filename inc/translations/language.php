@@ -268,6 +268,26 @@ function bp_find_page_by_translated_slug($slug, $lang)
 }
 
 /**
+ * Resolve a single translated slug to its real WordPress blog post.
+ *
+ * @param string $slug The translated slug.
+ * @param string $lang The language code.
+ * @return WP_Post|null The post if found, null otherwise.
+ */
+function bp_find_post_by_translated_slug($slug, $lang)
+{
+    $posts = get_posts([
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'meta_key'       => '_slug_' . $lang,
+        'meta_value'     => $slug,
+        'posts_per_page' => 1,
+    ]);
+
+    return ! empty($posts) ? $posts[0] : null;
+}
+
+/**
  * Resolve translated page slugs to their actual WordPress page.
  *
  * Handles both flat and nested (child) page slugs:
@@ -297,12 +317,23 @@ function bp_resolve_translated_page_slug($query_vars)
     $requested_path = $query_vars['pagename'];
     $segments = explode('/', $requested_path);
 
-    // Try the full path first (flat page, most common case)
+    // Try the full path first (flat page or blog post, most common case)
     if (count($segments) === 1) {
         $page = bp_find_page_by_translated_slug($segments[0], $lang);
         if ($page) {
             $query_vars['pagename'] = $page->post_name;
+            return $query_vars;
         }
+
+        // Check blog posts too
+        $post = bp_find_post_by_translated_slug($segments[0], $lang);
+        if ($post) {
+            unset($query_vars['pagename']);
+            $query_vars['name'] = $post->post_name;
+            $query_vars['post_type'] = 'post';
+            return $query_vars;
+        }
+
         return $query_vars;
     }
 
@@ -355,6 +386,38 @@ function bp_url($url)
 }
 
 /**
+ * Build a translated page URL for the current language.
+ *
+ * Usage in templates:
+ *   <a href="<?php echo bp_page_url('over-ons'); ?>">About</a>
+ *   // Returns /over-ons/ for NL, /en/about-us/ for EN
+ *
+ * @param string $default_slug The default language (Dutch) page slug.
+ * @return string
+ */
+function bp_page_url($default_slug)
+{
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
+
+    if ($lang === $default) {
+        return '/' . $default_slug . '/';
+    }
+
+    // Look up translated slug from post meta
+    $page = get_page_by_path($default_slug);
+    if ($page) {
+        $translated_slug = get_post_meta($page->ID, '_slug_' . $lang, true);
+        if ($translated_slug) {
+            return '/' . $lang . '/' . $translated_slug . '/';
+        }
+    }
+
+    // Fallback: use default slug with language prefix
+    return '/' . $lang . '/' . $default_slug . '/';
+}
+
+/**
  * Get the URL for switching to a different language on the current page.
  *
  * Used in the language switcher. Figures out what the current page is
@@ -387,6 +450,20 @@ function bp_lang_url($target_lang)
         // Check if this page has a translated slug
         $translated_slug = get_post_meta($page->ID, '_slug_' . $target_lang, true);
         $slug = $translated_slug ?: $page->post_name;
+
+        return home_url('/' . $target_lang . '/' . $slug . '/');
+    }
+
+    // Single blog post
+    if (is_single() && get_post_type() === 'post') {
+        $post = get_queried_object();
+
+        if ($target_lang === $default) {
+            return home_url('/' . $post->post_name . '/');
+        }
+
+        $translated_slug = get_post_meta($post->ID, '_slug_' . $target_lang, true);
+        $slug = $translated_slug ?: $post->post_name;
 
         return home_url('/' . $target_lang . '/' . $slug . '/');
     }

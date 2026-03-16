@@ -21,4 +21,16 @@ return [
         'label'  => 'EN',
         'locale' => 'en_US',
     ],
+    'de' => [
+        'label'  => 'DE',
+        'locale' => 'de_DE',
+    ],
+    'fr' => [
+        'label'  => 'FR',
+        'locale' => 'fr_FR',
+    ],
+    'es' => [
+        'label'  => 'ES',
+        'locale' => 'es_ES',
+    ],
 ];
