@@ -15,6 +15,10 @@ if (! defined('ABSPATH')) {
 require get_template_directory() . '/inc/translations/language.php';
 require get_template_directory() . '/inc/translations/translate.php';
 
+// SEO
+require get_template_directory() . '/inc/seo/sitemap.php';
+require get_template_directory() . '/inc/seo/structured-data.php';
+
 if (is_admin()) {
     require get_template_directory() . '/inc/translations/admin-health-check.php';
     require get_template_directory() . '/inc/seeders/seeder.php';

@@ -634,76 +634,106 @@ add_action('wp_head', 'bp_canonical_tag');
 // ---------------------------------------------------------------------------
 
 /**
- * Register the translated slugs meta box on the page editor.
+ * Register the SEO & translations meta box on the page editor.
  */
-function bp_slug_meta_box()
+function bp_seo_meta_box()
 {
-    add_meta_box(
-        'bp_translated_slugs',
-        'Translated URL Slugs',
-        'bp_slug_meta_box_html',
-        'page',
-        'side',
-        'default'
-    );
+    $post_types = array_merge(['page'], array_keys(get_post_types(['_builtin' => false, 'public' => true])));
+
+    foreach ($post_types as $pt) {
+        add_meta_box(
+            'bp_seo_translations',
+            'SEO & Translations',
+            'bp_seo_meta_box_html',
+            $pt,
+            'normal',
+            'high'
+        );
+    }
 }
-add_action('add_meta_boxes', 'bp_slug_meta_box');
+add_action('add_meta_boxes', 'bp_seo_meta_box');
 
 /**
- * Render the translated slugs meta box.
+ * Render the SEO & translations meta box.
  *
- * Shows one input field per non-default language.
- * The label shows a preview of what the full URL will look like.
+ * Shows per non-default language:
+ * - URL slug
+ * - Title tag
+ * - Meta description
  */
-function bp_slug_meta_box_html($post)
+function bp_seo_meta_box_html($post)
 {
     $langs   = bp_get_supported_langs();
     $default = bp_get_default_lang();
+    $config  = bp_get_languages_config();
 
-    wp_nonce_field('bp_save_slugs', 'bp_slugs_nonce');
+    wp_nonce_field('bp_save_seo_meta', 'bp_seo_nonce');
 
-    echo '<p class="description">Leave empty to use the Dutch slug in all languages.</p>';
+    echo '<p class="description">Leave fields empty to use the default language values.</p>';
+
+    echo '<table class="widefat" style="border:0;box-shadow:none;">';
+    echo '<thead><tr>';
+    echo '<th style="width:50px;">Lang</th>';
+    echo '<th>URL Slug</th>';
+    echo '<th>Title Tag</th>';
+    echo '<th>Meta Description</th>';
+    echo '</tr></thead><tbody>';
 
     foreach ($langs as $lang) {
         if ($lang === $default) {
             continue;
         }
 
-        $config = bp_get_languages_config();
-        $label  = $config[$lang]['label'] ?? strtoupper($lang);
-        $value  = get_post_meta($post->ID, '_slug_' . $lang, true);
+        $label     = $config[$lang]['label'] ?? strtoupper($lang);
+        $slug_val  = get_post_meta($post->ID, '_slug_' . $lang, true);
+        $title_val = get_post_meta($post->ID, '_title_' . $lang, true);
+        $desc_val  = get_post_meta($post->ID, '_meta_desc_' . $lang, true);
 
-        echo '<p>';
-        echo '<label for="bp_slug_' . esc_attr($lang) . '">';
-        echo '<strong>' . esc_html($label) . '</strong>';
-        echo ' <code>/' . esc_html($lang) . '/</code>';
-        echo '</label><br>';
-        echo '<input type="text" id="bp_slug_' . esc_attr($lang) . '" ';
-        echo 'name="bp_slug_' . esc_attr($lang) . '" ';
-        echo 'value="' . esc_attr($value) . '" ';
+        echo '<tr>';
+        echo '<td><strong>' . esc_html($label) . '</strong></td>';
+
+        echo '<td>';
+        echo '<input type="text" name="bp_slug_' . esc_attr($lang) . '" ';
+        echo 'value="' . esc_attr($slug_val) . '" ';
         echo 'placeholder="' . esc_attr($post->post_name) . '" ';
         echo 'style="width:100%;" />';
-        echo '</p>';
+        echo '</td>';
+
+        echo '<td>';
+        echo '<input type="text" name="bp_title_' . esc_attr($lang) . '" ';
+        echo 'value="' . esc_attr($title_val) . '" ';
+        echo 'placeholder="' . esc_attr(get_the_title($post)) . '" ';
+        echo 'style="width:100%;" maxlength="60" />';
+        echo '</td>';
+
+        echo '<td>';
+        echo '<textarea name="bp_meta_desc_' . esc_attr($lang) . '" ';
+        echo 'placeholder="Meta description..." ';
+        echo 'style="width:100%;height:40px;resize:vertical;" maxlength="155">';
+        echo esc_textarea($desc_val);
+        echo '</textarea>';
+        echo '</td>';
+
+        echo '</tr>';
     }
+
+    echo '</tbody></table>';
 }
 
 /**
- * Save the translated slugs when the page is saved.
+ * Save the SEO & translation meta when the post is saved.
  */
-function bp_save_slug_meta($post_id)
+function bp_save_seo_meta($post_id)
 {
-    // Verify nonce
-    if (! isset($_POST['bp_slugs_nonce']) || ! wp_verify_nonce($_POST['bp_slugs_nonce'], 'bp_save_slugs')) {
+    if (! isset($_POST['bp_seo_nonce']) || ! wp_verify_nonce($_POST['bp_seo_nonce'], 'bp_save_seo_meta')) {
         return;
     }
 
-    // Don't save on autosave
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
         return;
     }
 
-    // Check permissions
-    if (! current_user_can('edit_page', $post_id)) {
+    if (! current_user_can('edit_post', $post_id)) {
         return;
     }
 
@@ -715,17 +745,104 @@ function bp_save_slug_meta($post_id)
             continue;
         }
 
-        $key = 'bp_slug_' . $lang;
-
-        if (isset($_POST[$key])) {
-            $slug = sanitize_title($_POST[$key]);
-
+        $slug_key = 'bp_slug_' . $lang;
+        if (isset($_POST[$slug_key])) {
+            $slug = sanitize_title($_POST[$slug_key]);
             if ($slug) {
                 update_post_meta($post_id, '_slug_' . $lang, $slug);
             } else {
                 delete_post_meta($post_id, '_slug_' . $lang);
             }
         }
+
+        $title_key = 'bp_title_' . $lang;
+        if (isset($_POST[$title_key])) {
+            $title = sanitize_text_field($_POST[$title_key]);
+            if ($title) {
+                update_post_meta($post_id, '_title_' . $lang, $title);
+            } else {
+                delete_post_meta($post_id, '_title_' . $lang);
+            }
+        }
+
+        $desc_key = 'bp_meta_desc_' . $lang;
+        if (isset($_POST[$desc_key])) {
+            $desc = sanitize_text_field($_POST[$desc_key]);
+            if ($desc) {
+                update_post_meta($post_id, '_meta_desc_' . $lang, $desc);
+            } else {
+                delete_post_meta($post_id, '_meta_desc_' . $lang);
+            }
+        }
     }
 }
-add_action('save_post_page', 'bp_save_slug_meta');
+add_action('save_post', 'bp_save_seo_meta');
+
+// ---------------------------------------------------------------------------
+// SEO: Translated Title Tag
+// ---------------------------------------------------------------------------
+
+/**
+ * Override the document title for non-default languages.
+ */
+function bp_translate_document_title($title)
+{
+    $lang = bp_get_lang();
+
+    if ($lang === bp_get_default_lang()) {
+        return $title;
+    }
+
+    if (is_singular() || is_page()) {
+        $post = get_queried_object();
+        if ($post) {
+            $translated = get_post_meta($post->ID, '_title_' . $lang, true);
+            if ($translated) {
+                $title['title'] = $translated;
+            }
+        }
+    }
+
+    return $title;
+}
+add_filter('document_title_parts', 'bp_translate_document_title');
+
+// ---------------------------------------------------------------------------
+// SEO: Translated Meta Description
+// ---------------------------------------------------------------------------
+
+/**
+ * Output a meta description tag based on the current language.
+ */
+function bp_meta_description()
+{
+    if (! is_singular() && ! is_page()) {
+        return;
+    }
+
+    $post = get_queried_object();
+    if (! $post) {
+        return;
+    }
+
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
+
+    if ($lang !== $default) {
+        $desc = get_post_meta($post->ID, '_meta_desc_' . $lang, true);
+    } else {
+        $desc = get_post_meta($post->ID, '_meta_desc_' . $default, true);
+    }
+
+    if (! $desc) {
+        $desc = $post->post_excerpt;
+    }
+    if (! $desc) {
+        $desc = wp_trim_words(wp_strip_all_tags($post->post_content), 25, '...');
+    }
+
+    if ($desc) {
+        echo '<meta name="description" content="' . esc_attr($desc) . '" />' . "\n";
+    }
+}
+add_action('wp_head', 'bp_meta_description', 1);
