@@ -18,6 +18,7 @@ require get_template_directory() . '/inc/translations/translate.php';
 // SEO
 require get_template_directory() . '/inc/seo/sitemap.php';
 require get_template_directory() . '/inc/seo/structured-data.php';
+require get_template_directory() . '/inc/seo/open-graph.php';
 
 if (is_admin()) {
     require get_template_directory() . '/inc/translations/admin-health-check.php';
