@@ -584,8 +584,9 @@ function bp_hreflang_tags()
     foreach ($langs as $lang) {
         $url    = bp_lang_url($lang);
         $locale = $config[$lang]['locale'] ?? $lang;
-        // hreflang uses short codes like "nl", "en", or full like "en-US"
-        $hreflang = substr($locale, 0, 2);
+        // Use full locale with hyphen (e.g., fr-BE, nl-NL) so Google can
+        // distinguish regional variants. Google supports both "fr" and "fr-BE".
+        $hreflang = strtolower(str_replace('_', '-', $locale));
 
         echo '<link rel="alternate" hreflang="' . esc_attr($hreflang) . '" href="' . esc_url($url) . '" />' . "\n";
     }
