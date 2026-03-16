@@ -63,10 +63,20 @@ function bp_get_default_lang()
  */
 function bp_get_lang()
 {
+    // 1. Check query var (set by rewrite rules)
     $lang = get_query_var('lang', '');
 
     if ($lang && in_array($lang, bp_get_supported_langs(), true)) {
         return $lang;
+    }
+
+    // 2. Fallback: detect language from URL path (e.g., /en/about-us/)
+    //    This handles 404 pages and edge cases where the query var isn't set.
+    $path = trim(wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    $first_segment = explode('/', $path)[0] ?? '';
+
+    if ($first_segment && in_array($first_segment, bp_get_supported_langs(), true)) {
+        return $first_segment;
     }
 
     return bp_get_default_lang();
