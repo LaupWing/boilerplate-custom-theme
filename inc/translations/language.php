@@ -175,6 +175,13 @@ function bp_lang_rewrite_rules()
                     'index.php?lang=' . $lang . '&post_type=' . $dutch_slug . '&name=$matches[1]',
                     'top'
                 );
+
+                // /en/products/page/2/ → CPT archive pagination
+                add_rewrite_rule(
+                    "^{$lang}/{$translated_slug}/page/([0-9]+)/?$",
+                    'index.php?lang=' . $lang . '&post_type=' . $dutch_slug . '&paged=$matches[1]',
+                    'top'
+                );
             }
         }
 
@@ -241,13 +248,35 @@ add_filter('redirect_canonical', 'bp_lang_prevent_canonical_redirect');
 // ---------------------------------------------------------------------------
 
 /**
+ * Resolve a single translated slug to its real WordPress page.
+ *
+ * @param string $slug The translated slug.
+ * @param string $lang The language code.
+ * @return WP_Post|null The page if found, null otherwise.
+ */
+function bp_find_page_by_translated_slug($slug, $lang)
+{
+    $pages = get_posts([
+        'post_type'      => 'page',
+        'post_status'    => 'publish',
+        'meta_key'       => '_slug_' . $lang,
+        'meta_value'     => $slug,
+        'posts_per_page' => 1,
+    ]);
+
+    return ! empty($pages) ? $pages[0] : null;
+}
+
+/**
  * Resolve translated page slugs to their actual WordPress page.
  *
- * When a user visits /en/about-us/, the catch-all rewrite rule sets
- * pagename=about-us. But the actual WordPress page slug is "over-ons".
+ * Handles both flat and nested (child) page slugs:
+ *   /en/about-us/          → pagename=about-us   → resolves to "over-ons"
+ *   /en/about-us/team/     → pagename=about-us/team → resolves to "over-ons/team"
  *
- * This hook checks: is "about-us" a translated slug stored in post meta?
- * If yes, swap the pagename to the real slug so WordPress finds the page.
+ * For nested paths, each segment is checked individually:
+ *   - "about-us" → found via _slug_en meta → real slug is "over-ons"
+ *   - "team" → checked for _slug_en meta → if found, swap; if not, keep as-is
  *
  * Post meta key format: _slug_{lang} (e.g., _slug_en = "about-us")
  */
@@ -265,23 +294,31 @@ function bp_resolve_translated_page_slug($query_vars)
         return $query_vars;
     }
 
-    $requested_slug = $query_vars['pagename'];
+    $requested_path = $query_vars['pagename'];
+    $segments = explode('/', $requested_path);
 
-    // Look up: is there a page with _slug_{lang} = this slug?
-    $pages = get_posts([
-        'post_type'      => 'page',
-        'post_status'    => 'publish',
-        'meta_key'       => '_slug_' . $lang,
-        'meta_value'     => $requested_slug,
-        'posts_per_page' => 1,
-        'fields'         => 'ids',
-    ]);
-
-    if (! empty($pages)) {
-        // Found it — swap pagename to the real WordPress slug
-        $real_page = get_post($pages[0]);
-        $query_vars['pagename'] = $real_page->post_name;
+    // Try the full path first (flat page, most common case)
+    if (count($segments) === 1) {
+        $page = bp_find_page_by_translated_slug($segments[0], $lang);
+        if ($page) {
+            $query_vars['pagename'] = $page->post_name;
+        }
+        return $query_vars;
     }
+
+    // Nested path: translate each segment back to the real slug
+    $real_segments = [];
+    foreach ($segments as $segment) {
+        $page = bp_find_page_by_translated_slug($segment, $lang);
+        if ($page) {
+            $real_segments[] = $page->post_name;
+        } else {
+            // No translation found — keep the original segment
+            $real_segments[] = $segment;
+        }
+    }
+
+    $query_vars['pagename'] = implode('/', $real_segments);
 
     return $query_vars;
 }
@@ -497,6 +534,32 @@ function bp_attr($attributes, $key)
     $val = $attributes[$key] ?? '';
     return bp_val($val);
 }
+
+// ---------------------------------------------------------------------------
+// SEO: <html lang=""> Attribute
+// ---------------------------------------------------------------------------
+
+/**
+ * Override the <html lang=""> attribute to match the current visitor language.
+ *
+ * Without this, WordPress always outputs the site's default locale (e.g., nl-NL)
+ * even when the visitor is viewing /en/about-us/. This is important for:
+ * - Screen readers (accessibility)
+ * - Search engine language detection
+ * - Browser translation prompts
+ */
+function bp_override_language_attributes($output)
+{
+    $lang   = bp_get_lang();
+    $config = bp_get_languages_config();
+    $locale = $config[$lang]['locale'] ?? $lang;
+
+    // Convert locale format: nl_NL → nl-NL (HTML uses hyphens)
+    $html_lang = str_replace('_', '-', $locale);
+
+    return preg_replace('/lang="[^"]*"/', 'lang="' . esc_attr($html_lang) . '"', $output);
+}
+add_filter('language_attributes', 'bp_override_language_attributes');
 
 // ---------------------------------------------------------------------------
 // SEO: hreflang Tags
