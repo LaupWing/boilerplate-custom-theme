@@ -598,6 +598,38 @@ function bp_hreflang_tags()
 add_action('wp_head', 'bp_hreflang_tags');
 
 // ---------------------------------------------------------------------------
+// SEO: Canonical URL
+// ---------------------------------------------------------------------------
+
+/**
+ * Remove WordPress's default canonical tag.
+ *
+ * WordPress generates a canonical URL based on the page's real slug,
+ * which ignores the language prefix. For example, on /en/about-us/
+ * it would output <link rel="canonical" href="https://site.com/over-ons/" />
+ * — pointing to the default language version instead of the English one.
+ *
+ * We replace it with our own language-aware canonical below.
+ */
+remove_action('wp_head', 'rel_canonical');
+
+/**
+ * Output a language-aware canonical URL tag.
+ *
+ * Ensures each language version of a page has a canonical pointing to itself,
+ * not to the default language version. This prevents Google from treating
+ * translated pages as duplicates.
+ */
+function bp_canonical_tag()
+{
+    $lang = bp_get_lang();
+    $url  = bp_lang_url($lang);
+
+    echo '<link rel="canonical" href="' . esc_url($url) . '" />' . "\n";
+}
+add_action('wp_head', 'bp_canonical_tag');
+
+// ---------------------------------------------------------------------------
 // Page Slug Meta Box
 // ---------------------------------------------------------------------------
 
