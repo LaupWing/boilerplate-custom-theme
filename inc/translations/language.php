@@ -519,6 +519,67 @@ function bp_lang_url($target_lang)
 // ---------------------------------------------------------------------------
 
 /**
+ * Save a single theme string translation to the database.
+ *
+ * @param string $key  The Dutch source text (translation key).
+ * @param string $lang Language code.
+ * @param string $text Translated text.
+ */
+function bp_save_translation($key, $lang, $text)
+{
+    $translations = get_option('bp_theme_translations', []);
+
+    if (! isset($translations[$key])) {
+        $translations[$key] = [];
+    }
+
+    $translations[$key][$lang] = $text;
+
+    update_option('bp_theme_translations', $translations, false);
+}
+
+/**
+ * Get all theme string translations grouped by section, merging file defaults with DB overrides.
+ *
+ * @return array ['Section' => ['nl_key' => ['nl' => '...', 'en' => '...', ...]]]
+ */
+function bp_get_grouped_theme_translations()
+{
+    $file = get_template_directory() . '/inc/translations/translations.php';
+    $grouped = file_exists($file) ? require $file : [];
+
+    $db = get_option('bp_theme_translations', []);
+
+    // Merge DB overrides into the grouped structure
+    foreach ($grouped as $section => &$strings) {
+        foreach ($strings as $nl_key => &$translations) {
+            if (isset($db[$nl_key])) {
+                $translations = array_merge($translations, $db[$nl_key]);
+            }
+        }
+    }
+
+    // Add any DB-only strings (not in file) under "Other"
+    $file_keys = [];
+    foreach ($grouped as $section => $strings) {
+        foreach ($strings as $nl_key => $translations) {
+            $file_keys[$nl_key] = true;
+        }
+    }
+
+    foreach ($db as $nl_key => $translations) {
+        if (! isset($file_keys[$nl_key])) {
+            if (! isset($grouped['Other'])) {
+                $grouped['Other'] = [];
+            }
+            $grouped['Other'][$nl_key] = $translations;
+        }
+    }
+
+    return $grouped;
+}
+
+/**
  * Translate a static theme string.
  *
  * Usage in templates:
