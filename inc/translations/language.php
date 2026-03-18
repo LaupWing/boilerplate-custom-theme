@@ -373,16 +373,36 @@ add_filter('request', 'bp_resolve_translated_page_slug');
  */
 function bp_url($url)
 {
-    $lang = bp_get_lang();
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
 
-    if ($lang === bp_get_default_lang()) {
+    if ($lang === $default) {
         return $url;
     }
 
-    // Ensure leading slash
-    $url = '/' . ltrim($url, '/');
+    $langs       = bp_get_supported_langs();
+    $non_default = array_diff($langs, [$default]);
+    $parsed      = parse_url($url);
+    $path        = $parsed['path'] ?? '/';
 
-    return '/' . $lang . $url;
+    // Avoid double-prefixing.
+    $pattern = '#^/(' . implode('|', $non_default) . ')(/|$)#';
+    if (preg_match($pattern, $path)) {
+        return $url;
+    }
+
+    $new_path = '/' . $lang . $path;
+
+    // Rebuild full URL if it had scheme + host.
+    if (isset($parsed['scheme'], $parsed['host'])) {
+        $host = $parsed['host'];
+        if (isset($parsed['port'])) {
+            $host .= ':' . $parsed['port'];
+        }
+        return $parsed['scheme'] . '://' . $host . $new_path;
+    }
+
+    return $new_path;
 }
 
 /**
@@ -415,6 +435,111 @@ function bp_page_url($default_slug)
 
     // Fallback: use default slug with language prefix
     return '/' . $lang . '/' . $default_slug . '/';
+}
+
+/**
+ * Build a translated URL for a nav menu item.
+ *
+ * Menu items store absolute URLs (e.g. http://localhost/products/).
+ * For page items, this uses bp_page_url() for proper translated slugs.
+ * For CPT singles, uses bp_cpt_single_url(). For everything else,
+ * falls back to bp_url() which now handles absolute URLs.
+ *
+ * @param WP_Post $item Nav menu item object.
+ * @return string Translated URL.
+ */
+function bp_nav_item_url($item)
+{
+    // Page menu items → use translated slug.
+    if ('post_type' === $item->type && 'page' === $item->object) {
+        $page = get_post($item->object_id);
+        if ($page) {
+            if ((int) get_option('page_on_front') === $page->ID) {
+                return bp_url('/');
+            }
+            return bp_page_url($page->post_name);
+        }
+    }
+
+    // CPT single menu items → use translated archive + post slug.
+    if ('post_type' === $item->type && 'page' !== $item->object) {
+        $post = get_post($item->object_id);
+        if ($post) {
+            return bp_cpt_single_url($post, $post->post_type);
+        }
+    }
+
+    // Everything else → bp_url handles absolute URLs now.
+    return bp_url($item->url);
+}
+
+/**
+ * Build a translated CPT archive URL for the current language.
+ *
+ * Usage in templates:
+ *   <a href="<?php echo bp_cpt_url('diensten'); ?>">Services</a>
+ *   // Returns /diensten/ for NL, /en/services/ for EN
+ *
+ * @param string $cpt_slug The default-language CPT slug.
+ * @return string
+ */
+function bp_cpt_url($cpt_slug)
+{
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
+
+    if ($lang === $default) {
+        return '/' . $cpt_slug . '/';
+    }
+
+    $cpt_slugs  = bp_get_cpt_slugs_config();
+    $translated = $cpt_slugs[$cpt_slug][$lang] ?? $cpt_slug;
+
+    return '/' . $lang . '/' . $translated . '/';
+}
+
+/**
+ * Build a translated CPT single post URL for the current language.
+ *
+ * Translates the archive segment via slugs-cpt.php config and
+ * optionally translates the post slug via _slug_{lang} meta.
+ *
+ * Usage:
+ *   bp_cpt_single_url($post, 'diensten')
+ *   // NL: /diensten/mijn-dienst/
+ *   // EN: /en/services/my-service/
+ *
+ * @param int|WP_Post $post     Post ID or object.
+ * @param string      $cpt_slug The default-language CPT archive slug.
+ * @return string
+ */
+function bp_cpt_single_url($post, $cpt_slug)
+{
+    $post = get_post($post);
+    if (! $post) {
+        return '';
+    }
+
+    $lang    = bp_get_lang();
+    $default = bp_get_default_lang();
+
+    // Translate the post slug if meta exists.
+    $post_slug = $post->post_name;
+    if ($lang !== $default) {
+        $translated_post_slug = get_post_meta($post->ID, '_slug_' . $lang, true);
+        if ($translated_post_slug) {
+            $post_slug = $translated_post_slug;
+        }
+    }
+
+    if ($lang === $default) {
+        return '/' . $cpt_slug . '/' . $post_slug . '/';
+    }
+
+    $cpt_slugs     = bp_get_cpt_slugs_config();
+    $archive_slug  = $cpt_slugs[$cpt_slug][$lang] ?? $cpt_slug;
+
+    return '/' . $lang . '/' . $archive_slug . '/' . $post_slug . '/';
 }
 
 /**
