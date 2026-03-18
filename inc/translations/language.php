@@ -185,7 +185,35 @@ function bp_lang_rewrite_rules()
             }
         }
 
-        // /en/some-page/ → catch-all for pages
+        // Explicit rules for each page with a translated slug.
+        // Uses page_id to avoid WP's pagename→attachment fallback.
+        //
+        // WHY: When the catch-all rule sets pagename=translated-slug,
+        // WordPress's parse_request() looks up the page by that slug.
+        // If no page has that actual WP slug (because the real slug is
+        // different, e.g. "about" not "about-us"), WP silently converts
+        // it to attachment=translated-slug → 404.
+        // Using page_id bypasses the slug lookup entirely.
+        $pages_with_slugs = get_posts([
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'meta_key'       => '_slug_' . $lang,
+            'meta_compare'   => 'EXISTS',
+        ]);
+
+        foreach ($pages_with_slugs as $page) {
+            $translated_slug = get_post_meta($page->ID, '_slug_' . $lang, true);
+            if ($translated_slug) {
+                add_rewrite_rule(
+                    "^{$lang}/{$translated_slug}/?$",
+                    'index.php?lang=' . $lang . '&page_id=' . $page->ID,
+                    'top'
+                );
+            }
+        }
+
+        // Catch-all for pages without explicit translated slugs
         add_rewrite_rule(
             "^{$lang}/(.+?)/?$",
             'index.php?lang=' . $lang . '&pagename=$matches[1]',
@@ -194,6 +222,9 @@ function bp_lang_rewrite_rules()
     }
 }
 add_action('init', 'bp_lang_rewrite_rules');
+
+// Flush rewrite rules on theme activation so language rules are registered.
+add_action('after_switch_theme', 'flush_rewrite_rules');
 
 /**
  * Fix front page loading for non-default languages.
