@@ -176,7 +176,16 @@ function bp_run_seeder($reset = false)
     foreach ($pages_config as $page) {
         $existing = get_page_by_path($page['slug']);
         if ($existing) {
-            bp_seed_log('[Page] ' . $page['title'] . ' — already exists, skipping', 'skip');
+            // Page exists — still update slugs and content in case they changed.
+            if (! empty($page['slugs'])) {
+                foreach ($page['slugs'] as $lang => $translated_slug) {
+                    update_post_meta($existing->ID, '_slug_' . $lang, sanitize_title($translated_slug));
+                }
+            }
+            if (! empty($page['content'])) {
+                wp_update_post(['ID' => $existing->ID, 'post_content' => $page['content']]);
+            }
+            bp_seed_log('[Page] ' . $page['title'] . ' — exists, updated slugs/content', 'ok');
 
             if (! empty($page['is_front_page'])) {
                 $front_page_id = $existing->ID;
