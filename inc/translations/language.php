@@ -13,7 +13,7 @@ if (! defined('ABSPATH')) {
 }
 
 // Load the LocaleManager class — single source of truth for language config/detection.
-require_once get_template_directory() . '/inc/translations/LocaleManager.php';
+require_once get_template_directory() . '/inc/translations/core/LocaleManager.php';
 
 /**
  * Load and cache the languages config.
@@ -68,10 +68,10 @@ function bp_is_lang($lang)
 }
 
 // Load the UrlGenerator class — builds language-aware URLs.
-require_once get_template_directory() . '/inc/translations/UrlGenerator.php';
+require_once get_template_directory() . '/inc/translations/urls/UrlGenerator.php';
 
 // Load and register the Router class — rewrite rules, slug resolution, redirects.
-require_once get_template_directory() . '/inc/translations/Router.php';
+require_once get_template_directory() . '/inc/translations/core/Router.php';
 Router::register();
 
 /**
@@ -160,7 +160,7 @@ function bp_lang_url($target_lang)
 // ---------------------------------------------------------------------------
 
 // Load the Translator class — handles theme string translations and multilingual values.
-require_once get_template_directory() . '/inc/translations/Translator.php';
+require_once get_template_directory() . '/inc/translations/core/Translator.php';
 
 /**
  * Save a single theme string translation to the database.
@@ -232,9 +232,9 @@ function bp_attr($attributes, $key)
 }
 
 // Load and register SEO manager — hreflang, canonical, meta description, html lang.
-require_once get_template_directory() . '/inc/translations/SeoManager.php';
+require_once get_template_directory() . '/inc/translations/seo/SeoManager.php';
 SeoManager::register();
 
 // Load and register admin meta box — SEO & translations fields on post editor.
-require_once get_template_directory() . '/inc/translations/AdminMetaBox.php';
+require_once get_template_directory() . '/inc/translations/admin/AdminMetaBox.php';
 AdminMetaBox::register();
