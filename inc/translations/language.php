@@ -648,6 +648,9 @@ function bp_lang_url($target_lang)
 // Translation Helpers
 // ---------------------------------------------------------------------------
 
+// Load the Translator class — handles theme string translations and multilingual values.
+require_once get_template_directory() . '/inc/translations/Translator.php';
+
 /**
  * Save a single theme string translation to the database.
  *
@@ -657,15 +660,7 @@ function bp_lang_url($target_lang)
  */
 function bp_save_translation($key, $lang, $text)
 {
-    $translations = get_option('bp_theme_translations', []);
-
-    if (! isset($translations[$key])) {
-        $translations[$key] = [];
-    }
-
-    $translations[$key][$lang] = $text;
-
-    update_option('bp_theme_translations', $translations, false);
+    Translator::save($key, $lang, $text);
 }
 
 /**
@@ -675,38 +670,7 @@ function bp_save_translation($key, $lang, $text)
  */
 function bp_get_grouped_theme_translations()
 {
-    $file = get_template_directory() . '/inc/translations/translations.php';
-    $grouped = file_exists($file) ? require $file : [];
-
-    $db = get_option('bp_theme_translations', []);
-
-    // Merge DB overrides into the grouped structure
-    foreach ($grouped as $section => &$strings) {
-        foreach ($strings as $nl_key => &$translations) {
-            if (isset($db[$nl_key])) {
-                $translations = array_merge($translations, $db[$nl_key]);
-            }
-        }
-    }
-
-    // Add any DB-only strings (not in file) under "Other"
-    $file_keys = [];
-    foreach ($grouped as $section => $strings) {
-        foreach ($strings as $nl_key => $translations) {
-            $file_keys[$nl_key] = true;
-        }
-    }
-
-    foreach ($db as $nl_key => $translations) {
-        if (! isset($file_keys[$nl_key])) {
-            if (! isset($grouped['Other'])) {
-                $grouped['Other'] = [];
-            }
-            $grouped['Other'][$nl_key] = $translations;
-        }
-    }
-
-    return $grouped;
+    return Translator::grouped();
 }
 
 /**
@@ -716,50 +680,12 @@ function bp_get_grouped_theme_translations()
  *   <h1><?php echo bp__('Welkom'); ?></h1>
  *   // Outputs "Welcome" if lang=en
  *
- * Lookup order:
- *   1. Database (wp_option 'bp_theme_translations') — admin can override
- *   2. File (inc/translations/translations.php) — developer defaults
- *   3. Original text — returns the Dutch key as-is
- *
  * @param string $text The default-language (Dutch) text.
  * @return string Translated text, or original if no translation found.
  */
 function bp__($text)
 {
-    $lang = bp_get_lang();
-
-    // Default language — return as-is
-    if ($lang === bp_get_default_lang()) {
-        return $text;
-    }
-
-    // 1. Check database
-    $db_translations = get_option('bp_theme_translations', []);
-    if (! empty($db_translations[$text][$lang])) {
-        return $db_translations[$text][$lang];
-    }
-
-    // 2. Check file
-    static $file_translations = null;
-    if ($file_translations === null) {
-        $file = get_template_directory() . '/inc/translations/translations.php';
-        $grouped = file_exists($file) ? require $file : [];
-
-        // Flatten grouped array: ['Section' => ['key' => ['en' => 'val']]] → ['key' => ['en' => 'val']]
-        $file_translations = [];
-        foreach ($grouped as $section => $strings) {
-            foreach ($strings as $key => $translations) {
-                $file_translations[$key] = $translations;
-            }
-        }
-    }
-
-    if (! empty($file_translations[$text][$lang])) {
-        return $file_translations[$text][$lang];
-    }
-
-    // 3. Fallback — return original
-    return $text;
+    return Translator::translate($text);
 }
 
 /**
@@ -773,15 +699,7 @@ function bp__($text)
  */
 function bp_val($val)
 {
-    if (! is_array($val)) {
-        return $val ?: '';
-    }
-
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-
-    // Try current language, fall back to default
-    return $val[$lang] ?? $val[$default] ?? '';
+    return Translator::value($val);
 }
 
 /**
@@ -799,8 +717,7 @@ function bp_val($val)
  */
 function bp_attr($attributes, $key)
 {
-    $val = $attributes[$key] ?? '';
-    return bp_val($val);
+    return Translator::attr($attributes, $key);
 }
 
 // ---------------------------------------------------------------------------
