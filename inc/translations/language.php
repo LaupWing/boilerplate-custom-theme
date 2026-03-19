@@ -84,6 +84,9 @@ function bp_lang_query_vars($vars)
 }
 add_filter('query_vars', 'bp_lang_query_vars');
 
+// Load the UrlGenerator class — builds language-aware URLs.
+require_once get_template_directory() . '/inc/translations/UrlGenerator.php';
+
 /**
  * Load and cache the CPT slug translations config.
  *
@@ -91,13 +94,7 @@ add_filter('query_vars', 'bp_lang_query_vars');
  */
 function bp_get_cpt_slugs_config()
 {
-    static $config = null;
-
-    if ($config === null) {
-        $config = require get_template_directory() . '/inc/translations/config/slugs-cpt.php';
-    }
-
-    return $config;
+    return UrlGenerator::cptSlugsConfig();
 }
 
 /**
@@ -367,152 +364,49 @@ add_filter('request', 'bp_resolve_translated_page_slug');
 /**
  * Add the current language prefix to any internal URL.
  *
- * Usage in templates:
- *   <a href="<?php echo bp_url('/contact/'); ?>">Contact</a>
- *
- * If current lang is 'en': returns /en/contact/
- * If current lang is 'nl' (default): returns /contact/ (no prefix)
- *
  * @param string $url Relative URL (e.g., '/contact/' or '/producten/my-item/')
  * @return string
  */
 function bp_url($url)
 {
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-
-    if ($lang === $default) {
-        return $url;
-    }
-
-    $langs       = bp_get_supported_langs();
-    $non_default = array_diff($langs, [$default]);
-    $parsed      = parse_url($url);
-    $path        = $parsed['path'] ?? '/';
-
-    // Avoid double-prefixing.
-    $pattern = '#^/(' . implode('|', $non_default) . ')(/|$)#';
-    if (preg_match($pattern, $path)) {
-        return $url;
-    }
-
-    $new_path = '/' . $lang . $path;
-
-    // Rebuild full URL if it had scheme + host.
-    if (isset($parsed['scheme'], $parsed['host'])) {
-        $host = $parsed['host'];
-        if (isset($parsed['port'])) {
-            $host .= ':' . $parsed['port'];
-        }
-        return $parsed['scheme'] . '://' . $host . $new_path;
-    }
-
-    return $new_path;
+    return UrlGenerator::url($url);
 }
 
 /**
  * Build a translated page URL for the current language.
- *
- * Usage in templates:
- *   <a href="<?php echo bp_page_url('over-ons'); ?>">About</a>
- *   // Returns /over-ons/ for NL, /en/about-us/ for EN
  *
  * @param string $default_slug The default language (Dutch) page slug.
  * @return string
  */
 function bp_page_url($default_slug)
 {
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-
-    if ($lang === $default) {
-        return '/' . $default_slug . '/';
-    }
-
-    // Look up translated slug from post meta
-    $page = get_page_by_path($default_slug);
-    if ($page) {
-        $translated_slug = get_post_meta($page->ID, '_slug_' . $lang, true);
-        if ($translated_slug) {
-            return '/' . $lang . '/' . $translated_slug . '/';
-        }
-    }
-
-    // Fallback: use default slug with language prefix
-    return '/' . $lang . '/' . $default_slug . '/';
+    return UrlGenerator::pageUrl($default_slug);
 }
 
 /**
  * Build a translated URL for a nav menu item.
- *
- * Menu items store absolute URLs (e.g. http://localhost/products/).
- * For page items, this uses bp_page_url() for proper translated slugs.
- * For CPT singles, uses bp_cpt_single_url(). For everything else,
- * falls back to bp_url() which now handles absolute URLs.
  *
  * @param WP_Post $item Nav menu item object.
  * @return string Translated URL.
  */
 function bp_nav_item_url($item)
 {
-    // Page menu items → use translated slug.
-    if ('post_type' === $item->type && 'page' === $item->object) {
-        $page = get_post($item->object_id);
-        if ($page) {
-            if ((int) get_option('page_on_front') === $page->ID) {
-                return bp_url('/');
-            }
-            return bp_page_url($page->post_name);
-        }
-    }
-
-    // CPT single menu items → use translated archive + post slug.
-    if ('post_type' === $item->type && 'page' !== $item->object) {
-        $post = get_post($item->object_id);
-        if ($post) {
-            return bp_cpt_single_url($post, $post->post_type);
-        }
-    }
-
-    // Everything else → bp_url handles absolute URLs now.
-    return bp_url($item->url);
+    return UrlGenerator::navItemUrl($item);
 }
 
 /**
  * Build a translated CPT archive URL for the current language.
- *
- * Usage in templates:
- *   <a href="<?php echo bp_cpt_url('diensten'); ?>">Services</a>
- *   // Returns /diensten/ for NL, /en/services/ for EN
  *
  * @param string $cpt_slug The default-language CPT slug.
  * @return string
  */
 function bp_cpt_url($cpt_slug)
 {
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-
-    if ($lang === $default) {
-        return '/' . $cpt_slug . '/';
-    }
-
-    $cpt_slugs  = bp_get_cpt_slugs_config();
-    $translated = $cpt_slugs[$cpt_slug][$lang] ?? $cpt_slug;
-
-    return '/' . $lang . '/' . $translated . '/';
+    return UrlGenerator::cptUrl($cpt_slug);
 }
 
 /**
  * Build a translated CPT single post URL for the current language.
- *
- * Translates the archive segment via slugs-cpt.php config and
- * optionally translates the post slug via _slug_{lang} meta.
- *
- * Usage:
- *   bp_cpt_single_url($post, 'diensten')
- *   // NL: /diensten/mijn-dienst/
- *   // EN: /en/services/my-service/
  *
  * @param int|WP_Post $post     Post ID or object.
  * @param string      $cpt_slug The default-language CPT archive slug.
@@ -520,128 +414,18 @@ function bp_cpt_url($cpt_slug)
  */
 function bp_cpt_single_url($post, $cpt_slug)
 {
-    $post = get_post($post);
-    if (! $post) {
-        return '';
-    }
-
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-
-    // Translate the post slug if meta exists.
-    $post_slug = $post->post_name;
-    if ($lang !== $default) {
-        $translated_post_slug = get_post_meta($post->ID, '_slug_' . $lang, true);
-        if ($translated_post_slug) {
-            $post_slug = $translated_post_slug;
-        }
-    }
-
-    if ($lang === $default) {
-        return '/' . $cpt_slug . '/' . $post_slug . '/';
-    }
-
-    $cpt_slugs     = bp_get_cpt_slugs_config();
-    $archive_slug  = $cpt_slugs[$cpt_slug][$lang] ?? $cpt_slug;
-
-    return '/' . $lang . '/' . $archive_slug . '/' . $post_slug . '/';
+    return UrlGenerator::cptSingleUrl($post, $cpt_slug);
 }
 
 /**
  * Get the URL for switching to a different language on the current page.
- *
- * Used in the language switcher. Figures out what the current page is
- * and builds the URL for the target language.
  *
  * @param string $target_lang Language code to switch to (e.g., 'en')
  * @return string Full URL for that language
  */
 function bp_lang_url($target_lang)
 {
-    $default = bp_get_default_lang();
-
-    // Front page
-    if (is_front_page()) {
-        if ($target_lang === $default) {
-            return home_url('/');
-        }
-        return home_url('/' . $target_lang . '/');
-    }
-
-    // Single page
-    if (is_page()) {
-        $page = get_queried_object();
-
-        if ($target_lang === $default) {
-            // Default language — use the real WordPress slug
-            return home_url('/' . $page->post_name . '/');
-        }
-
-        // Check if this page has a translated slug
-        $translated_slug = get_post_meta($page->ID, '_slug_' . $target_lang, true);
-        $slug = $translated_slug ?: $page->post_name;
-
-        return home_url('/' . $target_lang . '/' . $slug . '/');
-    }
-
-    // Single blog post
-    if (is_single() && get_post_type() === 'post') {
-        $post = get_queried_object();
-
-        if ($target_lang === $default) {
-            return home_url('/' . $post->post_name . '/');
-        }
-
-        $translated_slug = get_post_meta($post->ID, '_slug_' . $target_lang, true);
-        $slug = $translated_slug ?: $post->post_name;
-
-        return home_url('/' . $target_lang . '/' . $slug . '/');
-    }
-
-    // Single CPT post
-    if (is_singular()) {
-        $post     = get_queried_object();
-        $cpt_slug = $post->post_type;
-        $cpt_slugs = bp_get_cpt_slugs_config();
-
-        if ($target_lang === $default) {
-            return home_url('/' . $cpt_slug . '/' . $post->post_name . '/');
-        }
-
-        // Use translated CPT slug if available
-        $archive_slug = $cpt_slugs[$cpt_slug][$target_lang] ?? $cpt_slug;
-
-        return home_url('/' . $target_lang . '/' . $archive_slug . '/' . $post->post_name . '/');
-    }
-
-    // CPT archive
-    if (is_post_type_archive()) {
-        $cpt_slug  = get_queried_object()->name;
-        $cpt_slugs = bp_get_cpt_slugs_config();
-
-        if ($target_lang === $default) {
-            return home_url('/' . $cpt_slug . '/');
-        }
-
-        $archive_slug = $cpt_slugs[$cpt_slug][$target_lang] ?? $cpt_slug;
-
-        return home_url('/' . $target_lang . '/' . $archive_slug . '/');
-    }
-
-    // Fallback: just prefix the current path
-    $path = wp_parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-    // Strip existing language prefix if present
-    $current_lang = bp_get_lang();
-    if ($current_lang !== $default) {
-        $path = preg_replace('#^/' . $current_lang . '/#', '/', $path);
-    }
-
-    if ($target_lang === $default) {
-        return home_url($path);
-    }
-
-    return home_url('/' . $target_lang . rtrim($path, '/') . '/');
+    return UrlGenerator::langUrl($target_lang);
 }
 
 // ---------------------------------------------------------------------------
