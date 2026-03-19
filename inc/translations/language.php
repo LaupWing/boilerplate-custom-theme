@@ -12,6 +12,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+// Load the LocaleManager class — single source of truth for language config/detection.
+require_once get_template_directory() . '/inc/translations/LocaleManager.php';
+
 /**
  * Load and cache the languages config.
  *
@@ -19,13 +22,7 @@ if (! defined('ABSPATH')) {
  */
 function bp_get_languages_config()
 {
-    static $config = null;
-
-    if ($config === null) {
-        $config = require get_template_directory() . '/inc/translations/config/languages.php';
-    }
-
-    return $config;
+    return LocaleManager::config();
 }
 
 /**
@@ -35,7 +32,7 @@ function bp_get_languages_config()
  */
 function bp_get_supported_langs()
 {
-    return array_keys(bp_get_languages_config());
+    return LocaleManager::supported();
 }
 
 /**
@@ -45,14 +42,7 @@ function bp_get_supported_langs()
  */
 function bp_get_default_lang()
 {
-    foreach (bp_get_languages_config() as $code => $lang) {
-        if (! empty($lang['default'])) {
-            return $code;
-        }
-    }
-
-    // Fallback to first language
-    return bp_get_supported_langs()[0];
+    return LocaleManager::default();
 }
 
 /**
@@ -63,23 +53,7 @@ function bp_get_default_lang()
  */
 function bp_get_lang()
 {
-    // 1. Check query var (set by rewrite rules)
-    $lang = get_query_var('lang', '');
-
-    if ($lang && in_array($lang, bp_get_supported_langs(), true)) {
-        return $lang;
-    }
-
-    // 2. Fallback: detect language from URL path (e.g., /en/about-us/)
-    //    This handles 404 pages and edge cases where the query var isn't set.
-    $path = trim(wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
-    $first_segment = explode('/', $path)[0] ?? '';
-
-    if ($first_segment && in_array($first_segment, bp_get_supported_langs(), true)) {
-        return $first_segment;
-    }
-
-    return bp_get_default_lang();
+    return LocaleManager::current();
 }
 
 /**
@@ -90,7 +64,7 @@ function bp_get_lang()
  */
 function bp_is_lang($lang)
 {
-    return bp_get_lang() === $lang;
+    return LocaleManager::is($lang);
 }
 
 // ---------------------------------------------------------------------------
