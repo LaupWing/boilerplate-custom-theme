@@ -41,20 +41,22 @@ theme-root/
 ├── search.php                         ← Search results
 ├── 404.php                            ← Error page
 │
-├── inc/translations/                  ← Translation system
-│   ├── config/                        ← ✏️ EDIT PER PROJECT
-│   │   ├── languages.php              ← Supported languages
-│   │   └── slugs-cpt.php             ← CPT URL slug translations
-│   ├── language.php                   ← Core routing + helpers (DO NOT EDIT)
-│   ├── translate.php                  ← AI translation endpoint (DO NOT EDIT)
-│   ├── translations.php              ← ✏️ Static theme string translations
-│   └── admin-health-check.php        ← Missing translation checker (DO NOT EDIT)
-│
-├── inc/seo/                           ← SEO module (auto-loaded via index.php)
-│   ├── index.php                      ← Entry point + React admin page registration
-│   ├── sitemap.php                    ← XML sitemap
-│   ├── structured-data.php            ← JSON-LD structured data
-│   └── open-graph.php                 ← Open Graph meta tags
+├── inc/                               ← PHP backend (mirrors src/ structure)
+│   ├── translations/                  ← Translation system
+│   │   ├── config/                    ← ✏️ EDIT PER PROJECT
+│   │   │   ├── languages.php          ← Supported languages
+│   │   │   └── slugs-cpt.php         ← CPT URL slug translations
+│   │   ├── language.php               ← Core routing + helpers (DO NOT EDIT)
+│   │   ├── translate.php              ← AI translation endpoint (DO NOT EDIT)
+│   │   ├── translations.php          ← ✏️ Static theme string translations
+│   │   └── admin-health-check.php    ← Missing translation checker (DO NOT EDIT)
+│   ├── admin/                         ← Admin modules (auto-loaded via index.php)
+│   │   └── seo/                       ← SEO module
+│   │       ├── index.php              ← Entry point + React admin page registration
+│   │       ├── sitemap.php            ← XML sitemap
+│   │       ├── structured-data.php    ← JSON-LD structured data
+│   │       └── open-graph.php         ← Open Graph meta tags
+│   └── api/                           ← REST/AJAX endpoints (auto-loaded via index.php)
 │
 ├── src/                               ← Source files (compiled to build/)
 │   ├── index.css                      ← Tailwind directives + base styles

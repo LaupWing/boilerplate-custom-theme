@@ -21,13 +21,20 @@ if (is_admin()) {
     require get_template_directory() . '/inc/seeders/seeder.php';
 }
 
-// Auto-load modules: any inc/*/index.php is loaded automatically.
+// Auto-load modules: scans inc/admin/*, inc/api/*, and inc/*/index.php.
 // Skip 'translations' and 'seeders' — they're loaded explicitly above.
 $bp_skip_modules = array( 'translations', 'seeders' );
-foreach ( glob( get_template_directory() . '/inc/*/index.php' ) as $bp_module_file ) {
-    $bp_module_name = basename( dirname( $bp_module_file ) );
-    if ( ! in_array( $bp_module_name, $bp_skip_modules, true ) ) {
-        require_once $bp_module_file;
+$bp_module_paths = array(
+    get_template_directory() . '/inc/*/index.php',
+    get_template_directory() . '/inc/admin/*/index.php',
+    get_template_directory() . '/inc/api/*/index.php',
+);
+foreach ( $bp_module_paths as $bp_pattern ) {
+    foreach ( glob( $bp_pattern ) as $bp_module_file ) {
+        $bp_module_name = basename( dirname( $bp_module_file ) );
+        if ( ! in_array( $bp_module_name, $bp_skip_modules, true ) ) {
+            require_once $bp_module_file;
+        }
     }
 }
 
