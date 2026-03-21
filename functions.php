@@ -15,15 +15,20 @@ if (! defined('ABSPATH')) {
 require get_template_directory() . '/inc/translations/language.php';
 require get_template_directory() . '/inc/translations/admin/translate.php';
 
-// SEO
-require get_template_directory() . '/inc/seo/sitemap.php';
-require get_template_directory() . '/inc/seo/structured-data.php';
-require get_template_directory() . '/inc/seo/open-graph.php';
-
 if (is_admin()) {
     require get_template_directory() . '/inc/translations/admin/admin-translations.php';
     require get_template_directory() . '/inc/translations/admin-health-check.php';
     require get_template_directory() . '/inc/seeders/seeder.php';
+}
+
+// Auto-load modules: any inc/*/index.php is loaded automatically.
+// Skip 'translations' and 'seeders' — they're loaded explicitly above.
+$bp_skip_modules = array( 'translations', 'seeders' );
+foreach ( glob( get_template_directory() . '/inc/*/index.php' ) as $bp_module_file ) {
+    $bp_module_name = basename( dirname( $bp_module_file ) );
+    if ( ! in_array( $bp_module_name, $bp_skip_modules, true ) ) {
+        require_once $bp_module_file;
+    }
 }
 
 /**
@@ -136,6 +141,28 @@ function boilerplate_editor_assets()
     }
 }
 add_action('enqueue_block_editor_assets', 'boilerplate_editor_assets');
+
+/**
+ * Enqueue translation sidebar plugin in the block editor.
+ */
+function boilerplate_enqueue_editor_plugins()
+{
+    $asset_file = get_template_directory() . '/build/editor/translator/index.asset.php';
+    if (! file_exists($asset_file)) {
+        return;
+    }
+
+    $asset = require $asset_file;
+
+    wp_enqueue_script(
+        'bp-translation-sidebar',
+        get_template_directory_uri() . '/build/editor/translator/index.js',
+        $asset['dependencies'],
+        $asset['version'],
+        true
+    );
+}
+add_action('enqueue_block_editor_assets', 'boilerplate_enqueue_editor_plugins');
 
 /**
  * Hide unused admin menu items (Customizer, Site Editor).
