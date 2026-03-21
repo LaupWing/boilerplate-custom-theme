@@ -7,9 +7,13 @@
     "build:css": "tailwindcss -i ./src/index.css -o ./build/index.css --minify",
     "watch:css": "tailwindcss -i ./src/index.css -o ./build/index.css --watch",
     "build:blocks": "wp-scripts build --webpack-copy-php --webpack-src-dir=src/blocks --output-path=build/blocks",
+    "build:admin": "for dir in src/admin/*/; do [ -f \"${dir}index.js\" ] && wp-scripts build ${dir}index.js --output-path=build/admin/$(basename $dir); done",
+    "build:editor": "for dir in src/editor/*/; do [ -f \"${dir}index.js\" ] && wp-scripts build ${dir}index.js --output-path=build/editor/$(basename $dir); done",
     "start:blocks": "wp-scripts start --webpack-copy-php --webpack-src-dir=src/blocks --output-path=build/blocks",
-    "build": "npm run build:css && npm run build:blocks",
-    "start": "npm run watch:css & npm run start:blocks"
+    "start:admin": "for dir in src/admin/*/; do [ -f \"${dir}index.js\" ] && wp-scripts start ${dir}index.js --output-path=build/admin/$(basename $dir) & done; wait",
+    "start:editor": "for dir in src/editor/*/; do [ -f \"${dir}index.js\" ] && wp-scripts start ${dir}index.js --output-path=build/editor/$(basename $dir) & done; wait",
+    "build": "npm run build:css && npm run build:blocks && npm run build:admin && npm run build:editor",
+    "start": "npm run watch:css & npm run start:blocks & npm run start:admin & npm run start:editor"
   },
   "keywords": [
     "wordpress",

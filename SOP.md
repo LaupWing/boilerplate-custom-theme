@@ -50,13 +50,23 @@ theme-root/
 │   ├── translations.php              ← ✏️ Static theme string translations
 │   └── admin-health-check.php        ← Missing translation checker (DO NOT EDIT)
 │
+├── inc/seo/                           ← SEO module (auto-loaded via index.php)
+│   ├── index.php                      ← Entry point + React admin page registration
+│   ├── sitemap.php                    ← XML sitemap
+│   ├── structured-data.php            ← JSON-LD structured data
+│   └── open-graph.php                 ← Open Graph meta tags
+│
 ├── src/                               ← Source files (compiled to build/)
 │   ├── index.css                      ← Tailwind directives + base styles
 │   ├── editor.css                     ← Block editor styles (if needed)
-│   └── blocks/                        ← Custom Gutenberg blocks
-│       └── components/                ← Shared block components
-│           ├── EditorWrapper.js       ← Language toggle UI (DO NOT EDIT)
-│           └── lang-helpers.js        ← getLang/setLang/translate (DO NOT EDIT)
+│   ├── blocks/                        ← Custom Gutenberg blocks (auto-discovered)
+│   │   └── components/                ← Shared block components
+│   │       ├── EditorWrapper.js       ← Language toggle UI (DO NOT EDIT)
+│   │       └── lang-helpers.js        ← getLang/setLang/translate (DO NOT EDIT)
+│   ├── admin/                         ← Admin pages (React, auto-discovered)
+│   │   └── seo/index.js              ← SEO admin page
+│   └── editor/                        ← Gutenberg editor extensions (auto-discovered)
+│       └── translator/index.js        ← Translation sidebar plugin
 │
 ├── assets/
 │   ├── js/main.js                     ← Frontend JavaScript
@@ -144,11 +154,32 @@ define('BP_OPENAI_API_KEY', 'sk-your-key-here');
 ## Build Commands
 
 ```bash
-npm run build       # Production build (CSS + blocks)
-npm run build:css   # Build Tailwind CSS only
-npm run start       # Dev mode (watches CSS + blocks)
-npm run watch:css   # Watch Tailwind CSS only
+npm run build         # Production build (CSS + blocks + admin + editor)
+npm run build:css     # Build Tailwind CSS only
+npm run build:blocks  # Build Gutenberg blocks only
+npm run build:admin   # Build admin pages (auto-discovers src/admin/*)
+npm run build:editor  # Build editor extensions (auto-discovers src/editor/*)
+npm run start         # Dev mode (watches all)
+npm run watch:css     # Watch Tailwind CSS only
 ```
+
+### How auto-discovery works
+
+- **Blocks:** `--webpack-src-dir` scans `src/blocks/` for subdirectories with `block.json`
+- **Admin & Editor:** A shell loop scans `src/admin/*/` and `src/editor/*/` for `index.js` files
+
+To add a new admin page or editor extension, just create a folder with an `index.js`:
+
+```bash
+src/admin/my-feature/index.js   → builds to build/admin/my-feature/
+src/editor/my-plugin/index.js   → builds to build/editor/my-plugin/
+```
+
+No need to update `package.json` — it's picked up automatically.
+
+### PHP auto-loading
+
+Any `inc/*/index.php` file is loaded automatically by `functions.php`. To add a new PHP module, create `inc/my-module/index.php` — no need to add a `require` in `functions.php`.
 
 ---
 
