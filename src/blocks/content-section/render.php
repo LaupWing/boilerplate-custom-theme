@@ -32,7 +32,7 @@ if (empty(trim(strip_tags($body)))) {
 }
 ?>
 
-<section <?php echo get_block_wrapper_attributes(['class' => "$section_bg py-16"]); ?>>
+<section data-seo-content <?php echo get_block_wrapper_attributes(['class' => "$section_bg py-16"]); ?>>
     <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div class="prose max-w-none">
             <?php echo $body; ?>

@@ -72,16 +72,13 @@ function bp_translate_ajax()
         wp_send_json_error('No non-empty texts provided');
     }
 
-    // API key: check wp-config.php constant first, then database option
-    $api_key = defined('BP_OPENAI_API_KEY')
-        ? constant('BP_OPENAI_API_KEY')
-        : get_option('bp_openai_api_key', '');
-
+    // Get API key from unified Snelstack settings
+    $api_key = function_exists('snelstack_get_openai_key') ? snelstack_get_openai_key() : '';
     if (empty($api_key)) {
-        wp_send_json_error('API key not configured. Define BP_OPENAI_API_KEY in wp-config.php or set it in the database.');
+        wp_send_json_error('API key not configured. Go to Snelstack Settings to add your OpenAI API key.');
     }
 
-    $model = get_option('bp_openai_model', 'gpt-4o-mini');
+    $model = function_exists('snelstack_get_openai_model') ? snelstack_get_openai_model() : 'gpt-4o-mini';
 
     // Language names for the prompt
     $lang_names = [
