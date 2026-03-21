@@ -402,3 +402,34 @@ When starting a new project from this boilerplate:
 - [ ] Set up menus (Appearance > Menus)
 - [ ] Set homepage (Settings > Reading > Static page)
 - [ ] Check Tools > Translation Check for missing translations
+- [ ] Install and activate Snel SEO plugin
+- [ ] Add `SNEL_SEO_OPENAI_KEY` to `wp-config.php` (or reuse `BP_OPENAI_API_KEY`)
+
+---
+
+## Snel SEO Plugin Integration
+
+The theme integrates with the **Snel SEO** plugin via two WordPress filter hooks in `inc/translations/language.php`. This allows the SEO plugin to handle multilingual meta titles and descriptions per language.
+
+### Filter hooks
+
+```php
+// Provide available languages to Snel SEO
+add_filter( 'snel_seo_languages', function () { ... } );
+
+// Tell Snel SEO what language the visitor is viewing
+add_filter( 'snel_seo_current_language', function () { ... } );
+```
+
+### How it works
+- Snel SEO stores SEO titles and meta descriptions as JSON objects: `{ nl: "...", en: "...", de: "..." }`
+- On the frontend, it reads the current language from the theme and serves the right meta tags
+- In the editor, language buttons let you set SEO data per language
+- AI generation creates content in the selected language
+- If Snel SEO is not installed, the hooks are ignored — no errors
+
+### Setup
+1. Install and activate the Snel SEO plugin
+2. The filter hooks connect automatically — no configuration needed
+3. Go to **Snel SEO → Settings** to configure site-wide defaults
+4. Per-page SEO is set in the Snel SEO meta box below the editor

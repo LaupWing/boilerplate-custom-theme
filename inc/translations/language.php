@@ -238,3 +238,28 @@ SeoManager::register();
 // Load and register admin meta box — SEO & translations fields on post editor.
 require_once get_template_directory() . '/inc/translations/admin/AdminMetaBox.php';
 AdminMetaBox::register();
+
+// ─── Snel SEO Integration ─────────────────────────────────────────────────
+
+/**
+ * Provide available languages to Snel SEO plugin.
+ */
+add_filter( 'snel_seo_languages', function () {
+    $config = include get_template_directory() . '/inc/translations/config/languages.php';
+    $result = array();
+    foreach ( $config as $code => $lang ) {
+        $result[] = array(
+            'code'    => $code,
+            'label'   => $lang['label'],
+            'default' => ! empty( $lang['default'] ),
+        );
+    }
+    return $result;
+} );
+
+/**
+ * Tell Snel SEO what language the current visitor is viewing.
+ */
+add_filter( 'snel_seo_current_language', function () {
+    return LocaleManager::current();
+} );
