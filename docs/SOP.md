@@ -309,7 +309,7 @@ export default function Edit({ attributes, setAttributes }) {
 $heading = bp_attr($attributes, 'heading');
 $content = bp_attr($attributes, 'content');
 ?>
-<section class="my-block">
+<section data-seo-content class="my-block">
     <?php if ($heading) : ?>
         <h2><?php echo esc_html($heading); ?></h2>
     <?php endif; ?>
@@ -318,6 +318,8 @@ $content = bp_attr($attributes, 'content');
     <?php endif; ?>
 </section>
 ```
+
+**Important:** Add `data-seo-content` to the outer `<section>` tag on any block that contains page content. This tells Snel SEO which sections to use for AI-powered SEO generation. Do NOT add it to layout blocks (topbar, navbar, footer).
 
 ### 5. index.js
 
