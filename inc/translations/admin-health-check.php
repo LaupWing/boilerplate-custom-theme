@@ -4,9 +4,9 @@
  * Translation Health Check admin page.
  *
  * Scans the theme for missing translations and shows a report.
- * Checks: theme strings (bp__), CPT slugs, and page slug meta.
+ * Checks: theme strings (snel__), CPT slugs, and page slug meta.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -16,24 +16,24 @@ if (! defined('ABSPATH')) {
 /**
  * Register the health check admin page under Tools.
  */
-function bp_health_check_menu()
+function snel_health_check_menu()
 {
     add_management_page(
         'Translation Health Check',
         'Translation Check',
         'manage_options',
-        'bp-translation-check',
-        'bp_health_check_page'
+        'snel-translation-check',
+        'snel_health_check_page'
     );
 }
-add_action('admin_menu', 'bp_health_check_menu');
+add_action('admin_menu', 'snel_health_check_menu');
 
 /**
- * Scan all theme PHP files for bp__('...') calls.
+ * Scan all theme PHP files for snel__('...') calls.
  *
  * @return array List of unique Dutch strings found in templates.
  */
-function bp_health_check_scan_theme_strings()
+function snel_health_check_scan_theme_strings()
 {
     $theme_dir = get_template_directory();
     $strings   = [];
@@ -54,8 +54,8 @@ function bp_health_check_scan_theme_strings()
         foreach ($files as $file) {
             $content = file_get_contents($file);
 
-            // Match bp__('...') and bp__("...")
-            if (preg_match_all("/bp__\(\s*['\"](.+?)['\"]\s*\)/", $content, $matches)) {
+            // Match snel__('...') and snel__("...")
+            if (preg_match_all("/snel__\(\s*['\"](.+?)['\"]\s*\)/", $content, $matches)) {
                 foreach ($matches[1] as $match) {
                     $strings[$match] = str_replace($theme_dir . '/', '', $file);
                 }
@@ -71,7 +71,7 @@ function bp_health_check_scan_theme_strings()
  *
  * @return array ['Dutch text' => ['en' => 'English', ...]]
  */
-function bp_health_check_get_file_translations()
+function snel_health_check_get_file_translations()
 {
     $file = get_template_directory() . '/inc/translations/translations.php';
 
@@ -94,23 +94,23 @@ function bp_health_check_get_file_translations()
 /**
  * Render the health check admin page.
  */
-function bp_health_check_page()
+function snel_health_check_page()
 {
-    $langs          = bp_get_supported_langs();
-    $default        = bp_get_default_lang();
+    $langs          = snel_get_supported_langs();
+    $default        = snel_get_default_lang();
     $non_default    = array_filter($langs, fn($l) => $l !== $default);
-    $db_translations = get_option('bp_theme_translations', []);
-    $file_translations = bp_health_check_get_file_translations();
+    $db_translations = get_option('snel_theme_translations', []);
+    $file_translations = snel_health_check_get_file_translations();
 
     echo '<div class="wrap">';
     echo '<h1>Translation Health Check</h1>';
 
     // ----- Theme Strings -----
     echo '<h2>Theme Strings</h2>';
-    $theme_strings = bp_health_check_scan_theme_strings();
+    $theme_strings = snel_health_check_scan_theme_strings();
 
     if (empty($theme_strings)) {
-        echo '<p>No <code>bp__()</code> calls found in theme files.</p>';
+        echo '<p>No <code>snel__()</code> calls found in theme files.</p>';
     } else {
         echo '<table class="widefat striped"><thead><tr>';
         echo '<th>Status</th><th>String</th><th>Found in</th>';
@@ -154,7 +154,7 @@ function bp_health_check_page()
 
     // ----- CPT Slugs -----
     echo '<h2 style="margin-top:2rem;">CPT Slugs</h2>';
-    $cpt_slugs = bp_get_cpt_slugs_config();
+    $cpt_slugs = snel_get_cpt_slugs_config();
     $custom_post_types = get_post_types(['_builtin' => false, 'public' => true], 'objects');
 
     if (empty($custom_post_types)) {

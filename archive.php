@@ -2,7 +2,7 @@
 /**
  * Archive template.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>
@@ -24,7 +24,7 @@ get_header(); ?>
 
     <?php the_posts_pagination(); ?>
 <?php else : ?>
-    <p class="text-text-muted"><?php echo bp__('Geen resultaten gevonden.'); ?></p>
+    <p class="text-text-muted"><?php echo snel__('Geen resultaten gevonden.'); ?></p>
 <?php endif; ?>
 
 <?php get_footer();

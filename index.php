@@ -2,7 +2,7 @@
 /**
  * The main template file.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>

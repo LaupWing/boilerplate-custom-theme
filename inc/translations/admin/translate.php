@@ -6,12 +6,12 @@
  * Translates text via OpenAI API. Powers the "Translate" button
  * in the EditorWrapper block component.
  *
- * Requires BP_OPENAI_API_KEY defined in wp-config.php,
- * or set via the database option 'bp_openai_api_key'.
+ * Requires SNEL_OPENAI_API_KEY defined in wp-config.php,
+ * or set via the database option 'snel_openai_api_key'.
  *
  * DO NOT EDIT per project.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -22,18 +22,18 @@ if (! defined('ABSPATH')) {
  * Pass translation config to the block editor JS.
  *
  * Makes the AJAX URL, nonce, and language config available
- * to the EditorWrapper component via the global `bpTranslate` object.
+ * to the EditorWrapper component via the global `snelTranslate` object.
  */
-function bp_translate_editor_assets()
+function snel_translate_editor_assets()
 {
-    wp_localize_script('wp-blocks', 'bpTranslate', [
+    wp_localize_script('wp-blocks', 'snelTranslate', [
         'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('bp_translate_nonce'),
-        'langs'   => bp_get_supported_langs(),
-        'default' => bp_get_default_lang(),
+        'nonce'   => wp_create_nonce('snel_translate_nonce'),
+        'langs'   => snel_get_supported_langs(),
+        'default' => snel_get_default_lang(),
     ]);
 }
-add_action('enqueue_block_editor_assets', 'bp_translate_editor_assets');
+add_action('enqueue_block_editor_assets', 'snel_translate_editor_assets');
 
 /**
  * AJAX handler: translate an array of strings via OpenAI.
@@ -46,9 +46,9 @@ add_action('enqueue_block_editor_assets', 'bp_translate_editor_assets');
  *
  * Returns: { success: true, data: { translations: [...] } }
  */
-function bp_translate_ajax()
+function snel_translate_ajax()
 {
-    check_ajax_referer('bp_translate_nonce', 'nonce');
+    check_ajax_referer('snel_translate_nonce', 'nonce');
 
     if (! current_user_can('edit_posts')) {
         wp_send_json_error('Unauthorized', 403);
@@ -154,4 +154,4 @@ function bp_translate_ajax()
 
     wp_send_json_success(['translations' => $translations]);
 }
-add_action('wp_ajax_bp_translate', 'bp_translate_ajax');
+add_action('wp_ajax_snel_translate', 'snel_translate_ajax');

@@ -3,7 +3,8 @@
  *
  * getLang(val, lang)          — read a language value from a multilingual object
  * setLang(val, lang, text)    — return a new object with the language value updated
- * translateTexts(texts, lang) — call the BP translate AJAX endpoint
+ * translateTexts(texts, lang) — call the snel translate AJAX endpoint
+ * translateBlockAttributes()  — translate block attributes by key
  */
 
 /**
@@ -17,7 +18,7 @@ export function getLang(val, lang) {
 	if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
 		return val[lang] || '';
 	}
-	const defaultLang = window.bpTranslate?.default || 'nl';
+	const defaultLang = window.snelTranslate?.default || 'nl';
 	return typeof val === 'string' ? (lang === defaultLang ? val : '') : '';
 }
 
@@ -31,7 +32,7 @@ export function getLang(val, lang) {
  * @returns {object}
  */
 export function setLang(val, lang, text) {
-	const langs = window.bpTranslate?.langs || ['nl', 'en'];
+	const langs = window.snelTranslate?.langs || ['nl', 'en'];
 
 	let obj;
 	if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
@@ -44,7 +45,7 @@ export function setLang(val, lang, text) {
 		});
 		// If val was a plain string, assign it to the default language
 		if (typeof val === 'string') {
-			const defaultLang = window.bpTranslate?.default || 'nl';
+			const defaultLang = window.snelTranslate?.default || 'nl';
 			obj[defaultLang] = val;
 		}
 	}
@@ -63,16 +64,16 @@ export function setLang(val, lang, text) {
 export async function translateTexts(texts, targetLang) {
 	if (!texts.length) return [];
 
-	const defaultLang = window.bpTranslate?.default || 'nl';
+	const defaultLang = window.snelTranslate?.default || 'nl';
 
 	const formData = new FormData();
-	formData.append('action', 'bp_translate');
-	formData.append('nonce', window.bpTranslate?.nonce || '');
+	formData.append('action', 'snel_translate');
+	formData.append('nonce', window.snelTranslate?.nonce || '');
 	formData.append('source', defaultLang);
 	formData.append('target', targetLang);
 	texts.forEach((t) => formData.append('texts[]', t));
 
-	const res = await fetch(window.bpTranslate?.ajaxUrl || '/wp-admin/admin-ajax.php', {
+	const res = await fetch(window.snelTranslate?.ajaxUrl || '/wp-admin/admin-ajax.php', {
 		method: 'POST',
 		credentials: 'same-origin',
 		body: formData,
@@ -84,4 +85,42 @@ export async function translateTexts(texts, targetLang) {
 	}
 
 	return data.data.translations;
+}
+
+/**
+ * Translate block attributes by key. Handles fresh state reads to avoid stale
+ * props when translating multiple languages sequentially.
+ *
+ * @param {string[]}  attrKeys      Attribute keys to translate (e.g. ['heading', 'subtext']).
+ * @param {string}    targetLang    Target language code.
+ * @param {string}    clientId      Block clientId for reading fresh attributes.
+ * @param {Function}  setAttributes Block setAttributes function.
+ */
+export async function translateBlockAttributes(attrKeys, targetLang, clientId, setAttributes) {
+	const { select } = wp.data;
+	const attrs = select('core/block-editor').getBlockAttributes(clientId);
+
+	const texts = [];
+	const keys = [];
+
+	attrKeys.forEach((key) => {
+		const nl = getLang(attrs[key], 'nl');
+		if (nl) {
+			texts.push(nl);
+			keys.push(key);
+		}
+	});
+
+	if (texts.length === 0) return;
+
+	const tr = await translateTexts(texts, targetLang);
+
+	// Re-read fresh attrs after async API call.
+	const freshAttrs = select('core/block-editor').getBlockAttributes(clientId);
+	const updates = {};
+	tr.forEach((translated, i) => {
+		updates[keys[i]] = setLang(freshAttrs[keys[i]], targetLang, translated);
+	});
+
+	setAttributes(updates);
 }

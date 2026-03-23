@@ -10,29 +10,29 @@
 
 <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
     <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-        <a href="<?php echo esc_url(bp_url('/')); ?>" class="text-xl font-bold text-gray-900">
+        <a href="<?php echo esc_url(snel_url('/')); ?>" class="text-xl font-bold text-gray-900">
             <?php bloginfo('name'); ?>
         </a>
 
         <nav class="flex items-center gap-6">
-            <a href="<?php echo esc_url(bp_url('/')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo bp__('Home'); ?>
+            <a href="<?php echo esc_url(snel_url('/')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <?php echo snel__('Home'); ?>
             </a>
-            <a href="<?php echo esc_url(bp_page_url('over-ons')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo bp__('Over Ons'); ?>
+            <a href="<?php echo esc_url(snel_page_url('over-ons')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <?php echo snel__('Over Ons'); ?>
             </a>
-            <a href="<?php echo esc_url(bp_page_url('diensten')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo bp__('Diensten'); ?>
+            <a href="<?php echo esc_url(snel_page_url('diensten')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <?php echo snel__('Diensten'); ?>
             </a>
-            <a href="<?php echo esc_url(bp_page_url('contact')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo bp__('Contact'); ?>
+            <a href="<?php echo esc_url(snel_page_url('contact')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <?php echo snel__('Contact'); ?>
             </a>
 
             <!-- Language Switcher -->
             <?php
-            $langs        = bp_get_supported_langs();
-            $current      = bp_get_lang();
-            $config       = bp_get_languages_config();
+            $langs        = snel_get_supported_langs();
+            $current      = snel_get_lang();
+            $config       = snel_get_languages_config();
             $current_label = $config[$current]['label'] ?? strtoupper($current);
 
             $lang_full_names = [
@@ -51,29 +51,29 @@
                 'es' => '🇪🇸',
             ];
             ?>
-            <div class="relative ml-4 border-l border-gray-200 pl-4" id="bp-lang-switcher">
+            <div class="relative ml-4 border-l border-gray-200 pl-4" id="snel-lang-switcher">
                 <button
                     type="button"
-                    id="bp-lang-btn"
+                    id="snel-lang-btn"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer"
                     aria-expanded="false"
                     aria-haspopup="true"
                 >
                     <span class="text-base leading-none"><?php echo $lang_flags[$current] ?? '🌐'; ?></span>
                     <span><?php echo esc_html($current_label); ?></span>
-                    <svg class="w-4 h-4 opacity-50 transition-transform" id="bp-lang-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 opacity-50 transition-transform" id="snel-lang-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
 
                 <div
-                    id="bp-lang-popover"
+                    id="snel-lang-popover"
                     class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg ring-1 ring-black/5 overflow-hidden opacity-0 invisible scale-95 transition-all duration-150 origin-top-right z-50"
                     role="menu"
                 >
-                    <div class="py-1" id="bp-lang-list">
+                    <div class="py-1" id="snel-lang-list">
                         <?php foreach ($langs as $lang) :
-                            $url       = bp_lang_url($lang);
+                            $url       = snel_lang_url($lang);
                             $label     = $config[$lang]['label'] ?? strtoupper($lang);
                             $full_name = $lang_full_names[$lang] ?? $label;
                             $flag      = $lang_flags[$lang] ?? '🌐';

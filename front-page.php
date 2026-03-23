@@ -2,7 +2,7 @@
 /**
  * Front page template.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>

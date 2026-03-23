@@ -5,7 +5,7 @@
  * Default language content comes from InnerBlocks ($content).
  * Other languages are stored in contentTranslations attribute.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 $bg_mode = $attributes['bgMode'] ?? 'white';
@@ -16,8 +16,8 @@ $bg_classes = [
 ];
 $section_bg = $bg_classes[$bg_mode] ?? 'bg-white';
 
-$lang    = bp_get_lang();
-$default = bp_get_default_lang();
+$lang    = snel_get_lang();
+$default = snel_get_default_lang();
 $translations = $attributes['contentTranslations'] ?? [];
 
 // Default language: render inner blocks. Other languages: render translated HTML.

@@ -2,13 +2,13 @@
 /**
  * Search results template.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>
 
 <h1 class="text-3xl font-bold mb-6">
-    <?php echo bp__('Zoekresultaten voor:'); ?> "<?php echo get_search_query(); ?>"
+    <?php echo snel__('Zoekresultaten voor:'); ?> "<?php echo get_search_query(); ?>"
 </h1>
 
 <?php if (have_posts()) : ?>
@@ -25,7 +25,7 @@ get_header(); ?>
 
     <?php the_posts_pagination(); ?>
 <?php else : ?>
-    <p class="text-text-muted"><?php echo bp__('Geen resultaten gevonden.'); ?></p>
+    <p class="text-text-muted"><?php echo snel__('Geen resultaten gevonden.'); ?></p>
 <?php endif; ?>
 
 <?php get_footer();

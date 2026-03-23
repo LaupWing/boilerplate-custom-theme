@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "boilerplate/content-section",
+  "name": "snel/content-section",
   "version": "1.0.0",
   "title": "Content Section",
   "category": "theme",
   "description": "Flexible content section with InnerBlocks and multilingual support.",
-  "textdomain": "boilerplate",
+  "textdomain": "snel",
   "supports": {
     "align": ["full", "wide"],
     "html": false

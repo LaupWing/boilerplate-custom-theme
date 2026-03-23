@@ -9,7 +9,7 @@
  * - Providing the list of supported languages
  * - Identifying the default language
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {

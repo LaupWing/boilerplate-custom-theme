@@ -2,7 +2,7 @@
 /**
  * The template for displaying pages.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>

@@ -3,7 +3,7 @@
 /**
  * Theme functions and definitions.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -23,17 +23,17 @@ if (is_admin()) {
 
 // Auto-load modules: scans inc/admin/*, inc/api/*, and inc/*/index.php.
 // Skip 'translations' and 'seeders' — they're loaded explicitly above.
-$bp_skip_modules = array( 'translations', 'seeders' );
-$bp_module_paths = array(
+$snel_skip_modules = array( 'translations', 'seeders' );
+$snel_module_paths = array(
     get_template_directory() . '/inc/*/index.php',
     get_template_directory() . '/inc/admin/*/index.php',
     get_template_directory() . '/inc/api/*/index.php',
 );
-foreach ( $bp_module_paths as $bp_pattern ) {
-    foreach ( glob( $bp_pattern ) as $bp_module_file ) {
-        $bp_module_name = basename( dirname( $bp_module_file ) );
-        if ( ! in_array( $bp_module_name, $bp_skip_modules, true ) ) {
-            require_once $bp_module_file;
+foreach ( $snel_module_paths as $snel_pattern ) {
+    foreach ( glob( $snel_pattern ) as $snel_module_file ) {
+        $snel_module_name = basename( dirname( $snel_module_file ) );
+        if ( ! in_array( $snel_module_name, $snel_skip_modules, true ) ) {
+            require_once $snel_module_file;
         }
     }
 }
@@ -41,7 +41,7 @@ foreach ( $bp_module_paths as $bp_pattern ) {
 /**
  * Theme Setup
  */
-function boilerplate_setup()
+function snel_setup()
 {
     // Let WordPress manage the document title
     add_theme_support('title-tag');
@@ -62,8 +62,8 @@ function boilerplate_setup()
 
     // Register navigation menus
     register_nav_menus(array(
-        'primary'   => __('Primary Menu', 'boilerplate'),
-        'footer'    => __('Footer Menu', 'boilerplate'),
+        'primary'   => __('Primary Menu', 'snel'),
+        'footer'    => __('Footer Menu', 'snel'),
     ));
 
     // Add support for block styles
@@ -76,16 +76,16 @@ function boilerplate_setup()
     add_theme_support('editor-styles');
     add_editor_style('build/editor.css');
 }
-add_action('after_setup_theme', 'boilerplate_setup');
+add_action('after_setup_theme', 'snel_setup');
 
 /**
  * Enqueue scripts and styles.
  */
-function boilerplate_scripts()
+function snel_scripts()
 {
     // Google Fonts
     wp_enqueue_style(
-        'boilerplate-google-fonts',
+        'snel-google-fonts',
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
         array(),
         null
@@ -93,7 +93,7 @@ function boilerplate_scripts()
 
     // Tailwind CSS (compiled)
     wp_enqueue_style(
-        'boilerplate-tailwind',
+        'snel-tailwind',
         get_template_directory_uri() . '/build/index.css',
         array(),
         filemtime(get_template_directory() . '/build/index.css')
@@ -101,21 +101,21 @@ function boilerplate_scripts()
 
     // Main JS
     wp_enqueue_script(
-        'boilerplate-main',
+        'snel-main',
         get_template_directory_uri() . '/assets/js/main.js',
         array(),
         filemtime(get_template_directory() . '/assets/js/main.js'),
         true
     );
 }
-add_action('wp_enqueue_scripts', 'boilerplate_scripts');
+add_action('wp_enqueue_scripts', 'snel_scripts');
 
 
 /**
  * Register custom Gutenberg blocks.
  * Scans build/blocks/ for block.json files and registers them.
  */
-function boilerplate_register_blocks()
+function snel_register_blocks()
 {
     $blocks_dir = get_template_directory() . '/build/blocks';
 
@@ -129,30 +129,30 @@ function boilerplate_register_blocks()
         register_block_type(dirname($block_json));
     }
 }
-add_action('init', 'boilerplate_register_blocks');
+add_action('init', 'snel_register_blocks');
 
 /**
  * Enqueue block editor assets.
  */
-function boilerplate_editor_assets()
+function snel_editor_assets()
 {
     $editor_css = get_template_directory() . '/build/editor.css';
 
     if (file_exists($editor_css)) {
         wp_enqueue_style(
-            'boilerplate-editor',
+            'snel-editor',
             get_template_directory_uri() . '/build/editor.css',
             array(),
             filemtime($editor_css)
         );
     }
 }
-add_action('enqueue_block_editor_assets', 'boilerplate_editor_assets');
+add_action('enqueue_block_editor_assets', 'snel_editor_assets');
 
 /**
  * Enqueue translation sidebar plugin in the block editor.
  */
-function boilerplate_enqueue_editor_plugins()
+function snel_enqueue_editor_plugins()
 {
     $asset_file = get_template_directory() . '/build/editor/translator/index.asset.php';
     if (! file_exists($asset_file)) {
@@ -162,21 +162,21 @@ function boilerplate_enqueue_editor_plugins()
     $asset = require $asset_file;
 
     wp_enqueue_script(
-        'bp-translation-sidebar',
+        'snel-translation-sidebar',
         get_template_directory_uri() . '/build/editor/translator/index.js',
         $asset['dependencies'],
         $asset['version'],
         true
     );
 }
-add_action('enqueue_block_editor_assets', 'boilerplate_enqueue_editor_plugins');
+add_action('enqueue_block_editor_assets', 'snel_enqueue_editor_plugins');
 
 /**
  * Hide unused admin menu items (Customizer, Site Editor).
  */
-function boilerplate_clean_admin_menu()
+function snel_clean_admin_menu()
 {
     remove_submenu_page('themes.php', 'customize.php');
     remove_submenu_page('themes.php', 'site-editor.php');
 }
-add_action('admin_menu', 'boilerplate_clean_admin_menu');
+add_action('admin_menu', 'snel_clean_admin_menu');

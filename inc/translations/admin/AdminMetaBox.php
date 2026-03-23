@@ -13,7 +13,7 @@
  *   _title_{lang}     — translated document title
  *   _meta_desc_{lang} — translated meta description
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -43,7 +43,7 @@ class AdminMetaBox
 
         foreach ($post_types as $pt) {
             add_meta_box(
-                'bp_seo_translations',
+                'snel_seo_translations',
                 'SEO & Translations',
                 [self::class, 'render'],
                 $pt,
@@ -67,7 +67,7 @@ class AdminMetaBox
         $default = LocaleManager::default();
         $config  = LocaleManager::config();
 
-        wp_nonce_field('bp_save_seo_meta', 'bp_seo_nonce');
+        wp_nonce_field('snel_save_seo_meta', 'snel_seo_nonce');
 
         echo '<p class="description">Leave fields empty to use the default language values.</p>';
 
@@ -93,21 +93,21 @@ class AdminMetaBox
             echo '<td><strong>' . esc_html($label) . '</strong></td>';
 
             echo '<td>';
-            echo '<input type="text" name="bp_slug_' . esc_attr($lang) . '" ';
+            echo '<input type="text" name="snel_slug_' . esc_attr($lang) . '" ';
             echo 'value="' . esc_attr($slug_val) . '" ';
             echo 'placeholder="' . esc_attr($post->post_name) . '" ';
             echo 'style="width:100%;" />';
             echo '</td>';
 
             echo '<td>';
-            echo '<input type="text" name="bp_title_' . esc_attr($lang) . '" ';
+            echo '<input type="text" name="snel_title_' . esc_attr($lang) . '" ';
             echo 'value="' . esc_attr($title_val) . '" ';
             echo 'placeholder="' . esc_attr(get_the_title($post)) . '" ';
             echo 'style="width:100%;" maxlength="60" />';
             echo '</td>';
 
             echo '<td>';
-            echo '<textarea name="bp_meta_desc_' . esc_attr($lang) . '" ';
+            echo '<textarea name="snel_meta_desc_' . esc_attr($lang) . '" ';
             echo 'placeholder="Meta description..." ';
             echo 'style="width:100%;height:40px;resize:vertical;" maxlength="155">';
             echo esc_textarea($desc_val);
@@ -127,7 +127,7 @@ class AdminMetaBox
      */
     public static function save(int $post_id): void
     {
-        if (! isset($_POST['bp_seo_nonce']) || ! wp_verify_nonce($_POST['bp_seo_nonce'], 'bp_save_seo_meta')) {
+        if (! isset($_POST['snel_seo_nonce']) || ! wp_verify_nonce($_POST['snel_seo_nonce'], 'snel_save_seo_meta')) {
             return;
         }
 
@@ -147,7 +147,7 @@ class AdminMetaBox
                 continue;
             }
 
-            $slug_key = 'bp_slug_' . $lang;
+            $slug_key = 'snel_slug_' . $lang;
             if (isset($_POST[$slug_key])) {
                 $slug = sanitize_title($_POST[$slug_key]);
                 if ($slug) {
@@ -157,7 +157,7 @@ class AdminMetaBox
                 }
             }
 
-            $title_key = 'bp_title_' . $lang;
+            $title_key = 'snel_title_' . $lang;
             if (isset($_POST[$title_key])) {
                 $title = sanitize_text_field($_POST[$title_key]);
                 if ($title) {
@@ -167,7 +167,7 @@ class AdminMetaBox
                 }
             }
 
-            $desc_key = 'bp_meta_desc_' . $lang;
+            $desc_key = 'snel_meta_desc_' . $lang;
             if (isset($_POST[$desc_key])) {
                 $desc = sanitize_text_field($_POST[$desc_key]);
                 if ($desc) {

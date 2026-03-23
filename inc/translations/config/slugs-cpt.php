@@ -18,7 +18,7 @@
  *
  * Edit this file per project.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 return [

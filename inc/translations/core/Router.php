@@ -22,7 +22,7 @@
  *   → Swaps pagename to "over-ons"
  *   → WordPress loads the correct page
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {

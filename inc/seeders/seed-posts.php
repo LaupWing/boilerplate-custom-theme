@@ -12,7 +12,7 @@
  *
  * Edit this file per project.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 return [
@@ -26,7 +26,7 @@ return [
             'es' => 'nuestro-nuevo-sitio-web-esta-en-linea',
         ],
         'excerpt' => 'Wij zijn trots om onze volledig vernieuwde website te presenteren.',
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:paragraph --><p>Wij zijn trots om onze volledig vernieuwde website te presenteren. Met een fris design en verbeterde functionaliteit willen wij u een nog betere ervaring bieden.</p><!-- /wp:paragraph -->'
             . '<!-- wp:paragraph --><p>De nieuwe website is sneller, mobielvriendelijker en beschikbaar in meerdere talen. Wij blijven investeren in technologie om u beter van dienst te zijn.</p><!-- /wp:paragraph -->',
             [
@@ -47,7 +47,7 @@ return [
             'es' => '5-consejos-para-una-estrategia-online-exitosa',
         ],
         'excerpt' => 'Ontdek onze vijf praktische tips om uw online aanwezigheid te versterken.',
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:paragraph --><p>In de digitale wereld van vandaag is een sterke online aanwezigheid essentieel. Hier zijn vijf tips om u op weg te helpen.</p><!-- /wp:paragraph -->'
             . '<!-- wp:list {"ordered":true} --><ol><li><strong>Ken uw doelgroep</strong> — Begrijp wie uw klanten zijn en wat ze zoeken.</li><li><strong>Investeer in SEO</strong> — Zorg dat uw website vindbaar is in zoekmachines.</li><li><strong>Wees consistent</strong> — Publiceer regelmatig waardevolle content.</li><li><strong>Gebruik social media</strong> — Bereik uw doelgroep waar ze zich bevinden.</li><li><strong>Meet en optimaliseer</strong> — Gebruik data om uw strategie te verbeteren.</li></ol><!-- /wp:list -->',
             [
@@ -68,7 +68,7 @@ return [
             'es' => 'por-que-el-multilingueismo-es-importante',
         ],
         'excerpt' => 'Een meertalige website opent deuren naar nieuwe markten en klanten.',
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:paragraph --><p>Een meertalige website is meer dan alleen een vertaling. Het is een investering in uw toekomst. Door uw content in meerdere talen aan te bieden, bereikt u nieuwe markten en bouwt u vertrouwen op bij internationale klanten.</p><!-- /wp:paragraph -->'
             . '<!-- wp:paragraph --><p>Onderzoek toont aan dat 75% van de consumenten de voorkeur geeft aan het kopen van producten in hun eigen taal. Mis deze kans niet en maak uw website vandaag nog meertalig.</p><!-- /wp:paragraph -->',
             [

@@ -21,7 +21,7 @@ const SeoApp = () => {
 };
 
 document.addEventListener( 'DOMContentLoaded', () => {
-    const root = document.getElementById( 'bp-seo-root' );
+    const root = document.getElementById( 'snel-seo-root' );
     if ( root ) {
         createRoot( root ).render( <SeoApp /> );
     }

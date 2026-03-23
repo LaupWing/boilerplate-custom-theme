@@ -10,7 +10,7 @@
  * - Translating the document <title> tag
  * - Outputting a translated meta description
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {

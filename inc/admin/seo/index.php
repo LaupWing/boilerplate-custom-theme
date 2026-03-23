@@ -4,7 +4,7 @@
  *
  * Loads SEO sub-modules and registers the React admin page.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,11 +21,11 @@ require_once __DIR__ . '/open-graph.php';
  */
 add_action( 'admin_menu', function () {
     add_menu_page(
-        __( 'SEO', 'boilerplate' ),
-        __( 'SEO', 'boilerplate' ),
+        __( 'SEO', 'snel' ),
+        __( 'SEO', 'snel' ),
         'manage_options',
-        'bp-seo',
-        'bp_seo_render_page',
+        'snel-seo',
+        'snel_seo_render_page',
         'dashicons-search',
         30
     );
@@ -34,15 +34,15 @@ add_action( 'admin_menu', function () {
 /**
  * Render the SEO admin page container (React mounts here).
  */
-function bp_seo_render_page() {
-    echo '<div id="bp-seo-root" class="wrap"></div>';
+function snel_seo_render_page() {
+    echo '<div id="snel-seo-root" class="wrap"></div>';
 }
 
 /**
  * Enqueue the SEO React app on the SEO admin page only.
  */
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
-    if ( 'toplevel_page_bp-seo' !== $hook ) {
+    if ( 'toplevel_page_snel-seo' !== $hook ) {
         return;
     }
 
@@ -55,7 +55,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
     $asset = require $asset_file;
 
     wp_enqueue_script(
-        'bp-seo-admin',
+        'snel-seo-admin',
         get_template_directory_uri() . '/build/admin/seo/index.js',
         $asset['dependencies'],
         $asset['version'],

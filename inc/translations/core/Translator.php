@@ -12,7 +12,7 @@
  * - Theme strings are stored in two places:
  *   1. File defaults: inc/translations/translations.php (grouped by section)
  *      Format: ['Section' => ['Dutch text' => ['en' => 'English', 'de' => 'German']]]
- *   2. Database overrides: wp_option 'bp_theme_translations'
+ *   2. Database overrides: wp_option 'snel_theme_translations'
  *      Format: ['Dutch text' => ['en' => 'English', 'de' => 'German']]
  *   Database takes priority over file defaults.
  *
@@ -20,7 +20,7 @@
  *   ['nl' => 'Welkom', 'en' => 'Welcome', 'de' => 'Willkommen']
  *   The value() method picks the right language from these arrays.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -39,10 +39,10 @@ class Translator
     /**
      * Translate a static theme string.
      *
-     * Used in templates like: bp__('Welkom') → returns 'Welcome' if lang=en
+     * Used in templates like: snel__('Welkom') → returns 'Welcome' if lang=en
      *
      * Lookup order:
-     *   1. Database (wp_option 'bp_theme_translations') — admin overrides
+     *   1. Database (wp_option 'snel_theme_translations') — admin overrides
      *   2. File (inc/translations/translations.php) — developer defaults
      *   3. Original text — returns the Dutch key as-is
      *
@@ -59,7 +59,7 @@ class Translator
         }
 
         // 1. Check database overrides
-        $db = get_option('bp_theme_translations', []);
+        $db = get_option('snel_theme_translations', []);
         if (! empty($db[$text][$lang])) {
             return $db[$text][$lang];
         }
@@ -128,7 +128,7 @@ class Translator
      */
     public static function save(string $key, string $lang, string $text): void
     {
-        $translations = get_option('bp_theme_translations', []);
+        $translations = get_option('snel_theme_translations', []);
 
         if (! isset($translations[$key])) {
             $translations[$key] = [];
@@ -136,7 +136,7 @@ class Translator
 
         $translations[$key][$lang] = $text;
 
-        update_option('bp_theme_translations', $translations, false);
+        update_option('snel_theme_translations', $translations, false);
     }
 
     /**
@@ -156,7 +156,7 @@ class Translator
         $file    = get_template_directory() . '/inc/translations/translations.php';
         $grouped = file_exists($file) ? require $file : [];
 
-        $db = get_option('bp_theme_translations', []);
+        $db = get_option('snel_theme_translations', []);
 
         // Merge DB overrides into the grouped structure
         foreach ($grouped as $section => &$strings) {

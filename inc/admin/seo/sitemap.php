@@ -8,7 +8,7 @@
  *
  * Disables WordPress's default sitemap to avoid conflicts.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -23,28 +23,28 @@ add_filter('wp_sitemaps_enabled', '__return_false');
 /**
  * Register the sitemap rewrite rule.
  */
-function bp_sitemap_rewrite()
+function snel_sitemap_rewrite()
 {
-    add_rewrite_rule('^sitemap\.xml$', 'index.php?bp_sitemap=1', 'top');
+    add_rewrite_rule('^sitemap\.xml$', 'index.php?snel_sitemap=1', 'top');
 }
-add_action('init', 'bp_sitemap_rewrite');
+add_action('init', 'snel_sitemap_rewrite');
 
 /**
  * Register the sitemap query var.
  */
-function bp_sitemap_query_var($vars)
+function snel_sitemap_query_var($vars)
 {
-    $vars[] = 'bp_sitemap';
+    $vars[] = 'snel_sitemap';
     return $vars;
 }
-add_filter('query_vars', 'bp_sitemap_query_var');
+add_filter('query_vars', 'snel_sitemap_query_var');
 
 /**
  * Serve the sitemap XML when requested.
  */
-function bp_sitemap_render()
+function snel_sitemap_render()
 {
-    if (! get_query_var('bp_sitemap')) {
+    if (! get_query_var('snel_sitemap')) {
         return;
     }
 
@@ -55,10 +55,10 @@ function bp_sitemap_render()
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n";
     echo '        xmlns:xhtml="http://www.w3.org/1999/xhtml">' . "\n";
 
-    $langs   = bp_get_supported_langs();
-    $default = bp_get_default_lang();
-    $config  = bp_get_languages_config();
-    $cpt_slugs = bp_get_cpt_slugs_config();
+    $langs   = snel_get_supported_langs();
+    $default = snel_get_default_lang();
+    $config  = snel_get_languages_config();
+    $cpt_slugs = snel_get_cpt_slugs_config();
 
     // --- Pages ---
     $pages = get_posts([
@@ -146,4 +146,4 @@ function bp_sitemap_render()
     echo '</urlset>';
     exit;
 }
-add_action('template_redirect', 'bp_sitemap_render');
+add_action('template_redirect', 'snel_sitemap_render');

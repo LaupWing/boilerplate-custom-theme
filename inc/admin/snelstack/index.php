@@ -5,7 +5,7 @@
  * Provides shared configuration for all Snelstack plugins.
  * API keys and AI model settings live here.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,8 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 add_action( 'admin_menu', function () {
     add_menu_page(
-        __( 'Snelstack', 'boilerplate' ),
-        __( 'Snelstack', 'boilerplate' ),
+        __( 'Snelstack', 'snel' ),
+        __( 'Snelstack', 'snel' ),
         'manage_options',
         'snelstack',
         'snelstack_render_settings',
@@ -54,11 +54,11 @@ function snelstack_get_openai_key() {
     if ( defined( 'SNEL_SEO_OPENAI_KEY' ) && constant( 'SNEL_SEO_OPENAI_KEY' ) ) {
         return constant( 'SNEL_SEO_OPENAI_KEY' );
     }
-    if ( defined( 'BP_OPENAI_API_KEY' ) && constant( 'BP_OPENAI_API_KEY' ) ) {
-        return constant( 'BP_OPENAI_API_KEY' );
+    if ( defined( 'SNEL_OPENAI_API_KEY' ) && constant( 'SNEL_OPENAI_API_KEY' ) ) {
+        return constant( 'SNEL_OPENAI_API_KEY' );
     }
 
-    $legacy = get_option( 'bp_openai_api_key', '' );
+    $legacy = get_option( 'snel_openai_api_key', '' );
     if ( $legacy ) return $legacy;
 
     return '';
@@ -71,7 +71,7 @@ function snelstack_get_openai_model() {
     $model = get_option( 'snelstack_openai_model', '' );
     if ( $model ) return $model;
 
-    return get_option( 'bp_openai_model', 'gpt-4o-mini' );
+    return get_option( 'snel_openai_model', 'gpt-4o-mini' );
 }
 
 /**
@@ -79,12 +79,12 @@ function snelstack_get_openai_model() {
  */
 function snelstack_render_settings() {
     $api_key = get_option( 'snelstack_openai_key', '' );
-    $model   = get_option( 'snelstack_openai_model', '' ) ?: get_option( 'bp_openai_model', 'gpt-4o-mini' );
+    $model   = get_option( 'snelstack_openai_model', '' ) ?: get_option( 'snel_openai_model', 'gpt-4o-mini' );
     ?>
     <div class="wrap">
-        <h1><?php esc_html_e( 'Snelstack Settings', 'boilerplate' ); ?></h1>
+        <h1><?php esc_html_e( 'Snelstack Settings', 'snel' ); ?></h1>
         <p style="color: #666; margin-bottom: 24px;">
-            <?php esc_html_e( 'Shared configuration for all Snelstack plugins (Snel SEO, Translations, etc.).', 'boilerplate' ); ?>
+            <?php esc_html_e( 'Shared configuration for all Snelstack plugins (Snel SEO, Translations, etc.).', 'snel' ); ?>
         </p>
 
         <form method="post" action="options.php">
@@ -94,7 +94,7 @@ function snelstack_render_settings() {
                 <tr>
                     <th scope="row">
                         <label for="snelstack_openai_key">
-                            <?php esc_html_e( 'OpenAI API Key', 'boilerplate' ); ?>
+                            <?php esc_html_e( 'OpenAI API Key', 'snel' ); ?>
                         </label>
                     </th>
                     <td>
@@ -108,19 +108,19 @@ function snelstack_render_settings() {
                             autocomplete="off"
                         />
                         <button type="button" onclick="var f=document.getElementById('snelstack_openai_key');f.type=f.type==='password'?'text':'password';" class="button" style="vertical-align: top;">
-                            <?php esc_html_e( 'Show/Hide', 'boilerplate' ); ?>
+                            <?php esc_html_e( 'Show/Hide', 'snel' ); ?>
                         </button>
                         <p class="description">
-                            <?php esc_html_e( 'Used by Snel SEO (AI generation) and the translation system.', 'boilerplate' ); ?>
-                            <a href="https://platform.openai.com/api-keys" target="_blank"><?php esc_html_e( 'Get your key', 'boilerplate' ); ?></a>
+                            <?php esc_html_e( 'Used by Snel SEO (AI generation) and the translation system.', 'snel' ); ?>
+                            <a href="https://platform.openai.com/api-keys" target="_blank"><?php esc_html_e( 'Get your key', 'snel' ); ?></a>
                         </p>
                         <?php if ( snelstack_get_openai_key() ) : ?>
                             <p style="color: #059669; margin-top: 4px; font-weight: 600;">
-                                &#10003; <?php esc_html_e( 'API key is configured — AI features are active.', 'boilerplate' ); ?>
+                                &#10003; <?php esc_html_e( 'API key is configured — AI features are active.', 'snel' ); ?>
                             </p>
                         <?php else : ?>
                             <p style="color: #d63638; margin-top: 4px; font-weight: 600;">
-                                &#10007; <?php esc_html_e( 'No API key — AI features are disabled.', 'boilerplate' ); ?>
+                                &#10007; <?php esc_html_e( 'No API key — AI features are disabled.', 'snel' ); ?>
                             </p>
                         <?php endif; ?>
                     </td>
@@ -129,7 +129,7 @@ function snelstack_render_settings() {
                 <tr>
                     <th scope="row">
                         <label for="snelstack_openai_model">
-                            <?php esc_html_e( 'AI Model', 'boilerplate' ); ?>
+                            <?php esc_html_e( 'AI Model', 'snel' ); ?>
                         </label>
                     </th>
                     <td>
@@ -139,7 +139,7 @@ function snelstack_render_settings() {
                             <option value="gpt-3.5-turbo" <?php selected( $model, 'gpt-3.5-turbo' ); ?>>gpt-3.5-turbo (legacy, cheapest)</option>
                         </select>
                         <p class="description">
-                            <?php esc_html_e( 'Used for both SEO generation and translations. gpt-4o-mini is recommended.', 'boilerplate' ); ?>
+                            <?php esc_html_e( 'Used for both SEO generation and translations. gpt-4o-mini is recommended.', 'snel' ); ?>
                         </p>
                     </td>
                 </tr>

@@ -12,7 +12,7 @@
  * - Language switcher URLs: current page in a different language
  * - Nav menu item URLs
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {

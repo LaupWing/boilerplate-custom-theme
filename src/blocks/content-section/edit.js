@@ -31,8 +31,8 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 	const { contentTranslations, bgMode } = attributes;
 	const blockProps = useBlockProps();
 
-	const defaultLang = window.bpTranslate?.default || 'nl';
-	const langs = window.bpTranslate?.langs || ['nl', 'en'];
+	const defaultLang = window.snelTranslate?.default || 'nl';
+	const langs = window.snelTranslate?.langs || ['nl', 'en'];
 	const nonDefaultLangs = langs.filter((l) => l !== defaultLang);
 
 	// Get inner blocks so we can serialize them for translation

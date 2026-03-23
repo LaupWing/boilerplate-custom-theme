@@ -6,7 +6,7 @@
  * Outputs WebPage, BreadcrumbList, and Organization schema
  * with the correct inLanguage value for the current page.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -16,10 +16,10 @@ if (! defined('ABSPATH')) {
 /**
  * Output JSON-LD structured data in the <head>.
  */
-function bp_structured_data()
+function snel_structured_data()
 {
-    $lang    = bp_get_lang();
-    $config  = bp_get_languages_config();
+    $lang    = snel_get_lang();
+    $config  = snel_get_languages_config();
     $locale  = $config[$lang]['locale'] ?? $lang;
     $in_lang = str_replace('_', '-', $locale);
 
@@ -34,7 +34,7 @@ function bp_structured_data()
     $webpage = [
         '@context'    => 'https://schema.org',
         '@type'       => 'WebPage',
-        'url'         => bp_lang_url($lang),
+        'url'         => snel_lang_url($lang),
         'inLanguage'  => $in_lang,
         'isPartOf'    => [
             '@type' => 'WebSite',
@@ -80,4 +80,4 @@ function bp_structured_data()
         echo "\n</script>\n";
     }
 }
-add_action('wp_head', 'bp_structured_data');
+add_action('wp_head', 'snel_structured_data');

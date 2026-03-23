@@ -9,7 +9,7 @@
  *
  * Edit seed-pages.php and seed-posts.php to customize.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -17,44 +17,44 @@ if (! defined('ABSPATH')) {
 }
 
 // Global log collector
-$bp_seed_logs = [];
+$snel_seed_logs = [];
 
-function bp_seed_log($message, $type = 'ok')
+function snel_seed_log($message, $type = 'ok')
 {
-    global $bp_seed_logs;
-    $bp_seed_logs[] = ['message' => $message, 'type' => $type];
+    global $snel_seed_logs;
+    $snel_seed_logs[] = ['message' => $message, 'type' => $type];
 }
 
 /**
  * Register the seeder admin page under Tools.
  */
-function bp_seeder_menu()
+function snel_seeder_menu()
 {
     add_management_page(
         'Seed Content',
         'Seed Content',
         'manage_options',
-        'bp-seed-content',
-        'bp_seeder_page'
+        'snel-seed-content',
+        'snel_seeder_page'
     );
 }
-add_action('admin_menu', 'bp_seeder_menu');
+add_action('admin_menu', 'snel_seeder_menu');
 
 /**
  * Render the seeder admin page.
  */
-function bp_seeder_page()
+function snel_seeder_page()
 {
-    global $bp_seed_logs;
+    global $snel_seed_logs;
 
     // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('bp_seed_action')) {
-        $reset = ! empty($_POST['bp_seed_reset']);
-        bp_run_seeder($reset);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_admin_referer('snel_seed_action')) {
+        $reset = ! empty($_POST['snel_seed_reset']);
+        snel_run_seeder($reset);
     }
 
-    $langs   = bp_get_supported_langs();
-    $default = bp_get_default_lang();
+    $langs   = snel_get_supported_langs();
+    $default = snel_get_default_lang();
 
     echo '<div class="wrap">';
     echo '<h1>Seed Content</h1>';
@@ -62,11 +62,11 @@ function bp_seeder_page()
     echo '<p><strong>Languages:</strong> ' . esc_html(implode(', ', array_map('strtoupper', $langs))) . ' (default: ' . esc_html(strtoupper($default)) . ')</p>';
 
     // Show logs if we just ran
-    if (! empty($bp_seed_logs)) {
+    if (! empty($snel_seed_logs)) {
         echo '<div style="background:#fff;border:1px solid #ccd0d4;padding:12px 16px;margin:16px 0;border-radius:4px;">';
         echo '<h3 style="margin-top:0;">Results</h3>';
         echo '<ul style="margin:0;padding:0;list-style:none;">';
-        foreach ($bp_seed_logs as $log) {
+        foreach ($snel_seed_logs as $log) {
             $color = match ($log['type']) {
                 'ok'    => 'green',
                 'error' => 'red',
@@ -79,16 +79,16 @@ function bp_seeder_page()
     }
 
     // Show current pages
-    bp_seeder_show_table('Pages', 'page', $langs, $default);
+    snel_seeder_show_table('Pages', 'page', $langs, $default);
 
     // Show current posts
-    bp_seeder_show_table('Blog Posts', 'post', $langs, $default);
+    snel_seeder_show_table('Blog Posts', 'post', $langs, $default);
 
     // Seed form
     echo '<form method="post" style="margin-top:20px;">';
-    wp_nonce_field('bp_seed_action');
+    wp_nonce_field('snel_seed_action');
     echo '<p><label>';
-    echo '<input type="checkbox" name="bp_seed_reset" value="1" /> ';
+    echo '<input type="checkbox" name="snel_seed_reset" value="1" /> ';
     echo '<strong>Reset &amp; Reseed</strong> — Delete all existing pages and posts first';
     echo '</label></p>';
     echo '<p><input type="submit" class="button button-primary" value="Seed Content" /></p>';
@@ -100,7 +100,7 @@ function bp_seeder_page()
 /**
  * Show an admin table for a post type.
  */
-function bp_seeder_show_table($label, $post_type, $langs, $default)
+function snel_seeder_show_table($label, $post_type, $langs, $default)
 {
     $existing = get_posts([
         'post_type'      => $post_type,
@@ -148,7 +148,7 @@ function bp_seeder_show_table($label, $post_type, $langs, $default)
  *
  * @param bool $reset Whether to delete existing content first.
  */
-function bp_run_seeder($reset = false)
+function snel_run_seeder($reset = false)
 {
     $pages_config = require get_template_directory() . '/inc/seeders/seed-pages.php';
     $posts_config = require get_template_directory() . '/inc/seeders/seed-posts.php';
@@ -166,7 +166,7 @@ function bp_run_seeder($reset = false)
                 wp_delete_post($pid, true);
             }
 
-            bp_seed_log('Deleted ' . count($existing) . ' existing ' . $pt . 's', 'info');
+            snel_seed_log('Deleted ' . count($existing) . ' existing ' . $pt . 's', 'info');
         }
     }
 
@@ -185,7 +185,7 @@ function bp_run_seeder($reset = false)
             if (! empty($page['content'])) {
                 wp_update_post(['ID' => $existing->ID, 'post_content' => $page['content']]);
             }
-            bp_seed_log('[Page] ' . $page['title'] . ' — exists, updated slugs/content', 'ok');
+            snel_seed_log('[Page] ' . $page['title'] . ' — exists, updated slugs/content', 'ok');
 
             if (! empty($page['is_front_page'])) {
                 $front_page_id = $existing->ID;
@@ -202,7 +202,7 @@ function bp_run_seeder($reset = false)
         ]);
 
         if (is_wp_error($post_id)) {
-            bp_seed_log('[Page] ' . $page['title'] . ' — ERROR: ' . $post_id->get_error_message(), 'error');
+            snel_seed_log('[Page] ' . $page['title'] . ' — ERROR: ' . $post_id->get_error_message(), 'error');
             continue;
         }
 
@@ -220,15 +220,15 @@ function bp_run_seeder($reset = false)
             $front_page_id = $post_id;
         }
 
-        $slug_info = bp_seed_slug_info($page['slugs'] ?? []);
-        bp_seed_log('[Page] ' . $page['title'] . ' — created' . $slug_info, 'ok');
+        $slug_info = snel_seed_slug_info($page['slugs'] ?? []);
+        snel_seed_log('[Page] ' . $page['title'] . ' — created' . $slug_info, 'ok');
     }
 
     // Set front page
     if ($front_page_id) {
         update_option('show_on_front', 'page');
         update_option('page_on_front', $front_page_id);
-        bp_seed_log('Set "' . get_the_title($front_page_id) . '" as front page', 'ok');
+        snel_seed_log('Set "' . get_the_title($front_page_id) . '" as front page', 'ok');
     }
 
     // Seed blog posts
@@ -240,7 +240,7 @@ function bp_run_seeder($reset = false)
         ]);
 
         if (! empty($existing)) {
-            bp_seed_log('[Post] ' . $post_data['title'] . ' — already exists, skipping', 'skip');
+            snel_seed_log('[Post] ' . $post_data['title'] . ' — already exists, skipping', 'skip');
             continue;
         }
 
@@ -254,7 +254,7 @@ function bp_run_seeder($reset = false)
         ]);
 
         if (is_wp_error($post_id)) {
-            bp_seed_log('[Post] ' . $post_data['title'] . ' — ERROR: ' . $post_id->get_error_message(), 'error');
+            snel_seed_log('[Post] ' . $post_data['title'] . ' — ERROR: ' . $post_id->get_error_message(), 'error');
             continue;
         }
 
@@ -264,19 +264,19 @@ function bp_run_seeder($reset = false)
             }
         }
 
-        $slug_info = bp_seed_slug_info($post_data['slugs'] ?? []);
-        bp_seed_log('[Post] ' . $post_data['title'] . ' — created' . $slug_info, 'ok');
+        $slug_info = snel_seed_slug_info($post_data['slugs'] ?? []);
+        snel_seed_log('[Post] ' . $post_data['title'] . ' — created' . $slug_info, 'ok');
     }
 
     // Flush rewrite rules so language URLs work
     flush_rewrite_rules();
-    bp_seed_log('Flushed rewrite rules', 'info');
+    snel_seed_log('Flushed rewrite rules', 'info');
 }
 
 /**
  * Format slug info string for log output.
  */
-function bp_seed_slug_info($slugs)
+function snel_seed_slug_info($slugs)
 {
     if (empty($slugs)) {
         return '';

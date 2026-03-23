@@ -2,7 +2,7 @@
 /**
  * Single post template.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 get_header(); ?>

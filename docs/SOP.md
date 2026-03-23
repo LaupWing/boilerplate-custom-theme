@@ -9,11 +9,11 @@ Standard Operating Procedure for setting up a new WordPress project from this bo
 ```bash
 # 1. Copy the theme folder to your new project
 # 2. Find-and-replace these prefixes:
-#    - "boilerplate" → "yourproject" (in PHP, package.json, style.css)
-#    - "bp_" → "yp_" (PHP function prefix)
-#    - "bp-" → "yp-" (CSS/JS handles)
-#    - "bpTranslate" → "ypTranslate" (JS global)
-#    - "BP_OPENAI_API_KEY" → "YP_OPENAI_API_KEY" (wp-config constant)
+#    - "snel" → "yourproject" (in PHP, package.json, style.css)
+#    - "snel_" → "yp_" (PHP function prefix)
+#    - "snel-" → "yp-" (CSS/JS handles)
+#    - "snelTranslate" → "ypTranslate" (JS global)
+#    - "SNEL_OPENAI_API_KEY" → "YP_OPENAI_API_KEY" (wp-config constant)
 # 3. Install dependencies
 npm install --include=dev
 # 4. Build once
@@ -126,7 +126,7 @@ return [
 
 **`inc/translations/translations.php`**
 
-Every time you use `bp__('Dutch text')` in a template, add the translation here:
+Every time you use `snel__('Dutch text')` in a template, add the translation here:
 
 ```php
 return [
@@ -148,7 +148,7 @@ Done in WordPress admin — each page has a "Translated URL Slugs" meta box in t
 Add to `wp-config.php`:
 
 ```php
-define('BP_OPENAI_API_KEY', 'sk-your-key-here');
+define('SNEL_OPENAI_API_KEY', 'sk-your-key-here');
 ```
 
 ---
@@ -191,7 +191,7 @@ Any `inc/*/index.php` file is loaded automatically by `functions.php`. To add a 
 
 | Type | Where it lives | How to add |
 |------|---------------|------------|
-| **Theme strings** | `translations.php` + database | Use `bp__('Dutch text')` in templates, add translation to file |
+| **Theme strings** | `translations.php` + database | Use `snel__('Dutch text')` in templates, add translation to file |
 | **Block content** | Block attributes `{nl: '...', en: '...'}` | Use EditorWrapper in block, toggle language, type or auto-translate |
 | **Page URL slugs** | Post meta `_slug_en` | Fill in the meta box on each page in wp-admin |
 
@@ -233,7 +233,7 @@ src/blocks/my-block/
 ```json
 {
     "apiVersion": 3,
-    "name": "boilerplate/my-block",
+    "name": "snel/my-block",
     "title": "My Block",
     "category": "theme",
     "attributes": {
@@ -306,8 +306,8 @@ export default function Edit({ attributes, setAttributes }) {
 
 ```php
 <?php
-$heading = bp_attr($attributes, 'heading');
-$content = bp_attr($attributes, 'content');
+$heading = snel_attr($attributes, 'heading');
+$content = snel_attr($attributes, 'content');
 ?>
 <section data-seo-content class="my-block">
     <?php if ($heading) : ?>
@@ -349,7 +349,7 @@ The block auto-registers via `functions.php` (scans `build/blocks/` for `block.j
 
 ```php
 <?php
-function bp_register_your_cpt() {
+function snel_register_your_cpt() {
     register_post_type('your-cpt', [
         'labels' => [...],
         'public' => true,
@@ -360,7 +360,7 @@ function bp_register_your_cpt() {
         'menu_icon' => 'dashicons-archive',
     ]);
 }
-add_action('init', 'bp_register_your_cpt');
+add_action('init', 'snel_register_your_cpt');
 ```
 
 ### 2. Add slug translation in `config/slugs-cpt.php`
@@ -391,13 +391,13 @@ Go to **Settings > Permalinks > Save** (just click save, don't change anything).
 When starting a new project from this boilerplate:
 
 - [ ] Copy theme folder, rename it
-- [ ] Find-and-replace all prefixes (boilerplate → yourproject, bp_ → yp_, etc.)
+- [ ] Find-and-replace all prefixes (snel → yourproject, snel_ → yp_, etc.)
 - [ ] Update `style.css` theme name and author
 - [ ] Update `package.json` name
 - [ ] Set brand colors in `tailwind.config.js`
 - [ ] Set Google Fonts in `functions.php` (or remove if not needed)
 - [ ] Configure languages in `config/languages.php`
-- [ ] Add `BP_OPENAI_API_KEY` to `wp-config.php` (for AI translation)
+- [ ] Add `SNEL_OPENAI_API_KEY` to `wp-config.php` (for AI translation)
 - [ ] Run `npm install && npm run build`
 - [ ] Activate theme
 - [ ] Flush rewrite rules (Settings > Permalinks > Save)
@@ -405,7 +405,7 @@ When starting a new project from this boilerplate:
 - [ ] Set homepage (Settings > Reading > Static page)
 - [ ] Check Tools > Translation Check for missing translations
 - [ ] Install and activate Snel SEO plugin
-- [ ] Add `SNEL_SEO_OPENAI_KEY` to `wp-config.php` (or reuse `BP_OPENAI_API_KEY`)
+- [ ] Add `SNEL_SEO_OPENAI_KEY` to `wp-config.php` (or reuse `SNEL_OPENAI_API_KEY`)
 
 ---
 

@@ -4,7 +4,7 @@
  * Provides:
  * - blockProps on the outer div
  * - Editor badge with block label
- * - Language toggle (reads from bpTranslate.langs)
+ * - Language toggle (reads from snelTranslate.langs)
  * - "Translate" button with loading state
  *
  * Usage (render props pattern):
@@ -26,13 +26,13 @@
  */
 import { useState } from '@wordpress/element';
 
-// Build language list from bpTranslate global (set by translate.php)
-const LANGS = (window.bpTranslate?.langs || ['nl', 'en']).map((code) => ({
+// Build language list from snelTranslate global (set by translate.php)
+const LANGS = (window.snelTranslate?.langs || ['nl', 'en']).map((code) => ({
 	code,
 	label: code.toUpperCase(),
 }));
 
-const DEFAULT_LANG = window.bpTranslate?.default || 'nl';
+const DEFAULT_LANG = window.snelTranslate?.default || 'nl';
 
 export default function EditorWrapper({ blockProps, label, subtitle, onTranslate, children }) {
 	const [currentLang, setCurrentLang] = useState(DEFAULT_LANG);

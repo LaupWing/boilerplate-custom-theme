@@ -8,7 +8,7 @@
  * - Menu items
  * - Page content (Gutenberg block overview)
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -17,52 +17,52 @@ if (! defined('ABSPATH')) {
 
 // ---- Register Menu ---------------------------------------------------------
 
-function bp_translations_admin_menu()
+function snel_translations_admin_menu()
 {
     add_menu_page(
-        __('Translations', 'boilerplate'),
-        __('Translations', 'boilerplate'),
+        __('Translations', 'snel'),
+        __('Translations', 'snel'),
         'manage_options',
-        'bp-translations',
-        'bp_translations_page_render',
+        'snel-translations',
+        'snel_translations_page_render',
         'dashicons-translation',
         30
     );
 
     add_submenu_page(
-        'bp-translations',
-        __('All Translations', 'boilerplate'),
-        __('All Translations', 'boilerplate'),
+        'snel-translations',
+        __('All Translations', 'snel'),
+        __('All Translations', 'snel'),
         'manage_options',
-        'bp-translations'
+        'snel-translations'
     );
 
     add_submenu_page(
-        'bp-translations',
-        __('Settings', 'boilerplate'),
-        __('Settings', 'boilerplate'),
+        'snel-translations',
+        __('Settings', 'snel'),
+        __('Settings', 'snel'),
         'manage_options',
-        'bp-translations-settings',
-        'bp_translations_settings_render'
+        'snel-translations-settings',
+        'snel_translations_settings_render'
     );
 }
-add_action('admin_menu', 'bp_translations_admin_menu');
+add_action('admin_menu', 'snel_translations_admin_menu');
 
 // ---- Handle Save -----------------------------------------------------------
 
-function bp_translations_handle_save()
+function snel_translations_handle_save()
 {
-    if (! isset($_POST['bp_translations_nonce'])) {
+    if (! isset($_POST['snel_translations_nonce'])) {
         return;
     }
-    if (! wp_verify_nonce($_POST['bp_translations_nonce'], 'bp_translations_save')) {
+    if (! wp_verify_nonce($_POST['snel_translations_nonce'], 'snel_translations_save')) {
         return;
     }
     if (! current_user_can('manage_options')) {
         return;
     }
 
-    $tab = sanitize_text_field($_POST['bp_tab'] ?? 'theme');
+    $tab = sanitize_text_field($_POST['snel_tab'] ?? 'theme');
 
     if ($tab === 'theme' || $tab === 'menu') {
         $items = $_POST['tr'] ?? [];
@@ -71,24 +71,24 @@ function bp_translations_handle_save()
             foreach ($langs as $lang => $text) {
                 $lang = sanitize_text_field($lang);
                 $text = sanitize_text_field($text);
-                bp_save_translation($key, $lang, $text);
+                snel_save_translation($key, $lang, $text);
             }
         }
     }
 
     $redirect = add_query_arg([
-        'page'  => 'bp-translations',
+        'page'  => 'snel-translations',
         'tab'   => $tab,
         'saved' => '1',
     ], admin_url('admin.php'));
     wp_safe_redirect($redirect);
     exit;
 }
-add_action('admin_init', 'bp_translations_handle_save');
+add_action('admin_init', 'snel_translations_handle_save');
 
 // ---- Render Page -----------------------------------------------------------
 
-function bp_translations_page_render()
+function snel_translations_page_render()
 {
     if (! current_user_can('manage_options')) {
         return;
@@ -96,70 +96,70 @@ function bp_translations_page_render()
 
     $tab   = sanitize_text_field($_GET['tab'] ?? 'theme');
     $saved = isset($_GET['saved']);
-    $langs = array_diff(bp_get_supported_langs(), [bp_get_default_lang()]);
+    $langs = array_diff(snel_get_supported_langs(), [snel_get_default_lang()]);
     ?>
     <div class="wrap">
-        <h1><?php esc_html_e('Translations', 'boilerplate'); ?></h1>
+        <h1><?php esc_html_e('Translations', 'snel'); ?></h1>
 
         <?php if ($saved) : ?>
             <div class="notice notice-success is-dismissible">
-                <p><?php esc_html_e('Translations saved.', 'boilerplate'); ?></p>
+                <p><?php esc_html_e('Translations saved.', 'snel'); ?></p>
             </div>
         <?php endif; ?>
 
         <nav class="nav-tab-wrapper" style="margin-bottom: 20px;">
-            <a href="<?php echo esc_url(admin_url('admin.php?page=bp-translations&tab=theme')); ?>"
+            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=theme')); ?>"
                class="nav-tab <?php echo $tab === 'theme' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Theme Strings', 'boilerplate'); ?>
+                <?php esc_html_e('Theme Strings', 'snel'); ?>
             </a>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=bp-translations&tab=menu')); ?>"
+            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=menu')); ?>"
                class="nav-tab <?php echo $tab === 'menu' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Menu', 'boilerplate'); ?>
+                <?php esc_html_e('Menu', 'snel'); ?>
             </a>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=bp-translations&tab=pages')); ?>"
+            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=pages')); ?>"
                class="nav-tab <?php echo $tab === 'pages' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Pages (Content)', 'boilerplate'); ?>
+                <?php esc_html_e('Pages (Content)', 'snel'); ?>
             </a>
         </nav>
 
         <?php if ($tab === 'pages') : ?>
-            <?php bp_translations_tab_pages($langs); ?>
+            <?php snel_translations_tab_pages($langs); ?>
         <?php else : ?>
-        <form method="post" id="bp-translations-form">
-            <?php wp_nonce_field('bp_translations_save', 'bp_translations_nonce'); ?>
-            <input type="hidden" name="bp_tab" value="<?php echo esc_attr($tab); ?>">
+        <form method="post" id="snel-translations-form">
+            <?php wp_nonce_field('snel_translations_save', 'snel_translations_nonce'); ?>
+            <input type="hidden" name="snel_tab" value="<?php echo esc_attr($tab); ?>">
 
             <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
                 <button type="submit" class="button button-primary">
-                    <?php esc_html_e('Save Translations', 'boilerplate'); ?>
+                    <?php esc_html_e('Save Translations', 'snel'); ?>
                 </button>
-                <button type="button" id="bp-translate-all" class="button" style="display: flex; align-items: center; gap: 6px;">
+                <button type="button" id="snel-translate-all" class="button" style="display: flex; align-items: center; gap: 6px;">
                     <span class="dashicons dashicons-translation" style="font-size: 16px; width: 16px; height: 16px;"></span>
-                    <?php esc_html_e('AI Translate All Missing', 'boilerplate'); ?>
+                    <?php esc_html_e('AI Translate All Missing', 'snel'); ?>
                 </button>
-                <span id="bp-translate-status" style="color: #666;"></span>
+                <span id="snel-translate-status" style="color: #666;"></span>
             </div>
 
             <?php
             if ($tab === 'theme') {
-                bp_translations_tab_theme($langs);
+                snel_translations_tab_theme($langs);
             } elseif ($tab === 'menu') {
-                bp_translations_tab_menu($langs);
+                snel_translations_tab_menu($langs);
             }
             ?>
         </form>
         <?php endif; ?>
     </div>
 
-    <?php bp_translations_page_script(); ?>
+    <?php snel_translations_page_script(); ?>
     <?php
 }
 
 // ---- Tab: Theme Strings ----------------------------------------------------
 
-function bp_translations_tab_theme($langs)
+function snel_translations_tab_theme($langs)
 {
-    $grouped = bp_get_grouped_theme_translations();
+    $grouped = snel_get_grouped_theme_translations();
     $total   = 0;
     ?>
     <?php foreach ($grouped as $section_name => $strings) :
@@ -170,7 +170,7 @@ function bp_translations_tab_theme($langs)
             <thead>
                 <tr>
                     <th style="width: 25%;">
-                        <?php echo esc_html(strtoupper(bp_get_default_lang())); ?> (source)
+                        <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> (source)
                     </th>
                     <?php foreach ($langs as $lang) : ?>
                         <th><?php echo esc_html(strtoupper($lang)); ?></th>
@@ -183,10 +183,10 @@ function bp_translations_tab_theme($langs)
                 ?>
                     <tr>
                         <td>
-                            <input type="hidden" class="bp-source-text" value="<?php echo esc_attr($nl_key); ?>">
+                            <input type="hidden" class="snel-source-text" value="<?php echo esc_attr($nl_key); ?>">
                             <input type="text"
-                                   name="tr[<?php echo esc_attr($encoded); ?>][<?php echo esc_attr(bp_get_default_lang()); ?>]"
-                                   value="<?php echo esc_attr($translations[bp_get_default_lang()] ?? $nl_key); ?>"
+                                   name="tr[<?php echo esc_attr($encoded); ?>][<?php echo esc_attr(snel_get_default_lang()); ?>]"
+                                   value="<?php echo esc_attr($translations[snel_get_default_lang()] ?? $nl_key); ?>"
                                    class="large-text"
                                    style="font-weight: 600;">
                         </td>
@@ -197,7 +197,7 @@ function bp_translations_tab_theme($langs)
                                 <input type="text"
                                        name="tr[<?php echo esc_attr($encoded); ?>][<?php echo esc_attr($lang); ?>]"
                                        value="<?php echo esc_attr($value); ?>"
-                                       class="large-text bp-translation-input"
+                                       class="large-text snel-translation-input"
                                        data-lang="<?php echo esc_attr($lang); ?>"
                                        placeholder="<?php echo esc_attr($value ? '' : '— empty —'); ?>"
                                        style="<?php echo empty($value) ? 'border-color: #d63638; background: #fef7f7;' : ''; ?>">
@@ -210,7 +210,7 @@ function bp_translations_tab_theme($langs)
     <?php endforeach; ?>
     <p class="description" style="margin-top: 8px;">
         <?php printf(
-            esc_html__('%d strings across %d sections. Empty fields are highlighted in red.', 'boilerplate'),
+            esc_html__('%d strings across %d sections. Empty fields are highlighted in red.', 'snel'),
             $total,
             count($grouped)
         ); ?>
@@ -220,7 +220,7 @@ function bp_translations_tab_theme($langs)
 
 // ---- Tab: Menu -------------------------------------------------------------
 
-function bp_translations_tab_menu($langs)
+function snel_translations_tab_menu($langs)
 {
     $locations = get_nav_menu_locations();
 
@@ -236,17 +236,17 @@ function bp_translations_tab_menu($langs)
         return;
     }
 
-    $db = get_option('bp_theme_translations', []);
+    $db = get_option('snel_theme_translations', []);
     ?>
     <h3 style="margin-top: 16px; margin-bottom: 8px;">Primary Menu</h3>
     <p style="color: #666; margin-bottom: 12px;">
-        Add translations for each menu item. The <?php echo esc_html(strtoupper(bp_get_default_lang())); ?> column is the source title from Appearance &gt; Menus.
+        Add translations for each menu item. The <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> column is the source title from Appearance &gt; Menus.
     </p>
     <table class="widefat striped">
         <thead>
             <tr>
                 <th style="width: 25%;">
-                    <?php echo esc_html(strtoupper(bp_get_default_lang())); ?> (source)
+                    <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> (source)
                 </th>
                 <?php foreach ($langs as $lang) : ?>
                     <th><?php echo esc_html(strtoupper($lang)); ?></th>
@@ -282,7 +282,7 @@ function bp_translations_tab_menu($langs)
                         <?php if ($depth > 0) : ?>
                             <span style="color: #bbb; margin-right: 4px;">&mdash;</span>
                         <?php endif; ?>
-                        <input type="hidden" name="tr[<?php echo esc_attr($key); ?>][<?php echo esc_attr(bp_get_default_lang()); ?>]" value="<?php echo esc_attr($label); ?>">
+                        <input type="hidden" name="tr[<?php echo esc_attr($key); ?>][<?php echo esc_attr(snel_get_default_lang()); ?>]" value="<?php echo esc_attr($label); ?>">
                         <strong style="font-size: 13px;"><?php echo esc_html($label); ?></strong>
                     </td>
                     <?php foreach ($langs as $lang) :
@@ -292,7 +292,7 @@ function bp_translations_tab_menu($langs)
                             <input type="text"
                                    name="tr[<?php echo esc_attr($key); ?>][<?php echo esc_attr($lang); ?>]"
                                    value="<?php echo esc_attr($value); ?>"
-                                   class="large-text bp-translation-input"
+                                   class="large-text snel-translation-input"
                                    data-lang="<?php echo esc_attr($lang); ?>"
                                    placeholder="<?php echo esc_attr($label); ?>"
                                    <?php if (empty($value)) {
@@ -312,11 +312,11 @@ function bp_translations_tab_menu($langs)
 /**
  * Recursively extract translatable {lang: '...'} fields from block attributes.
  */
-function bp_extract_translatable_fields($attrs, $prefix = '')
+function snel_extract_translatable_fields($attrs, $prefix = '')
 {
     $fields  = [];
-    $default = bp_get_default_lang();
-    $langs   = bp_get_supported_langs();
+    $default = snel_get_default_lang();
+    $langs   = snel_get_supported_langs();
 
     foreach ($attrs as $key => $value) {
         $path = $prefix ? "{$prefix}.{$key}" : $key;
@@ -342,7 +342,7 @@ function bp_extract_translatable_fields($attrs, $prefix = '')
                 if (! is_array($item)) {
                     continue;
                 }
-                $nested = bp_extract_translatable_fields($item, "{$path}[{$i}]");
+                $nested = snel_extract_translatable_fields($item, "{$path}[{$i}]");
                 $fields = array_merge($fields, $nested);
             }
         }
@@ -351,7 +351,7 @@ function bp_extract_translatable_fields($attrs, $prefix = '')
     return $fields;
 }
 
-function bp_translations_tab_pages($langs)
+function snel_translations_tab_pages($langs)
 {
     $pages = get_posts([
         'post_type'      => ['page', 'post'],
@@ -362,11 +362,11 @@ function bp_translations_tab_pages($langs)
     ]);
 
     if (empty($pages)) {
-        echo '<p>' . esc_html__('No published pages found.', 'boilerplate') . '</p>';
+        echo '<p>' . esc_html__('No published pages found.', 'snel') . '</p>';
         return;
     }
 
-    $default_lang = bp_get_default_lang();
+    $default_lang = snel_get_default_lang();
     $page_data    = [];
 
     foreach ($pages as $page) {
@@ -374,11 +374,11 @@ function bp_translations_tab_pages($langs)
         $page_blocks = [];
 
         foreach ($blocks as $block) {
-            if (empty($block['blockName']) || strpos($block['blockName'], 'boilerplate/') !== 0) {
+            if (empty($block['blockName']) || strpos($block['blockName'], 'snel/') !== 0) {
                 continue;
             }
 
-            $fields = bp_extract_translatable_fields($block['attrs'] ?? []);
+            $fields = snel_extract_translatable_fields($block['attrs'] ?? []);
             if (empty($fields)) {
                 continue;
             }
@@ -403,7 +403,7 @@ function bp_translations_tab_pages($langs)
 
             $page_blocks[] = [
                 'name'   => $block['blockName'],
-                'title'  => str_replace('boilerplate/', '', $block['blockName']),
+                'title'  => str_replace('snel/', '', $block['blockName']),
                 'fields' => $fields,
                 'stats'  => $stats,
             ];
@@ -421,13 +421,13 @@ function bp_translations_tab_pages($langs)
     }
 
     if (empty($page_data)) {
-        echo '<p>' . esc_html__('No pages with translatable blocks found.', 'boilerplate') . '</p>';
+        echo '<p>' . esc_html__('No pages with translatable blocks found.', 'snel') . '</p>';
         return;
     }
     ?>
 
     <p class="description" style="margin-bottom: 16px;">
-        <?php esc_html_e('Read-only overview of Gutenberg block translations per page. Click "Edit" to open the page editor.', 'boilerplate'); ?>
+        <?php esc_html_e('Read-only overview of Gutenberg block translations per page. Click "Edit" to open the page editor.', 'snel'); ?>
     </p>
 
     <?php foreach ($page_data as $page) :
@@ -440,13 +440,13 @@ function bp_translations_tab_pages($langs)
                     <span style="color: #787c82; margin-left: 8px;">/<?php echo esc_html($page['slug']); ?></span>
                 </div>
                 <a href="<?php echo esc_url($edit_url); ?>" class="button button-small">
-                    <?php esc_html_e('Edit Page', 'boilerplate'); ?>
+                    <?php esc_html_e('Edit Page', 'snel'); ?>
                 </a>
             </div>
             <table class="widefat" style="border: 0; border-radius: 0;">
                 <thead>
                     <tr>
-                        <th style="width: 25%;"><?php esc_html_e('Block', 'boilerplate'); ?></th>
+                        <th style="width: 25%;"><?php esc_html_e('Block', 'snel'); ?></th>
                         <th style="width: 10%;"><?php echo esc_html(strtoupper($default_lang)); ?></th>
                         <?php foreach ($langs as $lang) : ?>
                             <th style="width: 10%;"><?php echo esc_html(strtoupper($lang)); ?></th>
@@ -456,8 +456,8 @@ function bp_translations_tab_pages($langs)
                 </thead>
                 <tbody>
                     <?php foreach ($page['blocks'] as $bi => $block) :
-                        $block_edit_url = add_query_arg('bpScrollTo', $block['name'], $edit_url);
-                        $row_id = 'bp-detail-' . $page['id'] . '-' . $bi;
+                        $block_edit_url = add_query_arg('snelScrollTo', $block['name'], $edit_url);
+                        $row_id = 'snel-detail-' . $page['id'] . '-' . $bi;
 
                         $nl_filled = 0;
                         $nl_total  = count($block['fields']);
@@ -467,9 +467,9 @@ function bp_translations_tab_pages($langs)
                             }
                         }
                     ?>
-                        <tr class="bp-block-row" data-detail="<?php echo esc_attr($row_id); ?>" style="cursor: pointer;">
+                        <tr class="snel-block-row" data-detail="<?php echo esc_attr($row_id); ?>" style="cursor: pointer;">
                             <td>
-                                <span class="bp-toggle-arrow" style="display: inline-block; width: 16px; font-size: 11px; color: #787c82;">&#9654;</span>
+                                <span class="snel-toggle-arrow" style="display: inline-block; width: 16px; font-size: 11px; color: #787c82;">&#9654;</span>
                                 <strong><?php echo esc_html(ucwords(str_replace('-', ' ', $block['title']))); ?></strong>
                                 <br><small style="color: #787c82; margin-left: 16px;"><?php echo esc_html(count($block['fields'])); ?> translatable fields</small>
                             </td>
@@ -490,7 +490,7 @@ function bp_translations_tab_pages($langs)
                             <?php endforeach; ?>
                             <td>
                                 <a href="<?php echo esc_url($block_edit_url); ?>" class="button button-small" onclick="event.stopPropagation();">
-                                    <?php esc_html_e('Edit', 'boilerplate'); ?> &rarr;
+                                    <?php esc_html_e('Edit', 'snel'); ?> &rarr;
                                 </a>
                             </td>
                         </tr>
@@ -538,7 +538,7 @@ function bp_translations_tab_pages($langs)
 
     <p class="description">
         <?php printf(
-            esc_html__('%d pages with %d translatable blocks.', 'boilerplate'),
+            esc_html__('%d pages with %d translatable blocks.', 'snel'),
             count($page_data),
             array_sum(array_map(function ($p) {
                 return count($p['blocks']);
@@ -548,11 +548,11 @@ function bp_translations_tab_pages($langs)
 
     <script>
     (function() {
-        document.querySelectorAll('.bp-block-row').forEach(function(row) {
+        document.querySelectorAll('.snel-block-row').forEach(function(row) {
             row.addEventListener('click', function() {
                 var id = row.getAttribute('data-detail');
                 var details = document.querySelectorAll('.' + id);
-                var arrow = row.querySelector('.bp-toggle-arrow');
+                var arrow = row.querySelector('.snel-toggle-arrow');
                 var open = details[0] && details[0].style.display !== 'none';
                 details.forEach(function(r) { r.style.display = open ? 'none' : 'table-row'; });
                 if (arrow) arrow.innerHTML = open ? '&#9654;' : '&#9660;';
@@ -565,29 +565,29 @@ function bp_translations_tab_pages($langs)
 
 // ---- JavaScript: AI Translate All ------------------------------------------
 
-function bp_translations_page_script()
+function snel_translations_page_script()
 {
     ?>
     <script>
     (function() {
-        var btn    = document.getElementById('bp-translate-all');
-        var status = document.getElementById('bp-translate-status');
+        var btn    = document.getElementById('snel-translate-all');
+        var status = document.getElementById('snel-translate-status');
         if (!btn) return;
 
         btn.addEventListener('click', function() {
-            var targetLangs = <?php echo wp_json_encode(array_values(array_diff(bp_get_supported_langs(), [bp_get_default_lang()]))); ?>;
+            var targetLangs = <?php echo wp_json_encode(array_values(array_diff(snel_get_supported_langs(), [snel_get_default_lang()]))); ?>;
 
             var work = {};
             targetLangs.forEach(function(lang) { work[lang] = []; });
 
-            var rows = document.querySelectorAll('#bp-translations-form tbody tr');
+            var rows = document.querySelectorAll('#snel-translations-form tbody tr');
             rows.forEach(function(row) {
-                var sourceEl = row.querySelector('.bp-source-text');
+                var sourceEl = row.querySelector('.snel-source-text');
                 if (!sourceEl) return;
                 var sourceText = (sourceEl.value || sourceEl.textContent || '').trim();
                 if (!sourceText) return;
 
-                var inputs = row.querySelectorAll('.bp-translation-input');
+                var inputs = row.querySelectorAll('.snel-translation-input');
                 inputs.forEach(function(input) {
                     var lang = input.dataset.lang;
                     var val  = (input.value || input.textContent || '').trim();
@@ -617,9 +617,9 @@ function bp_translations_page_script()
 
                 var texts    = items.map(function(item) { return item.sourceText; });
                 var formData = new FormData();
-                formData.append('action', 'bp_translate');
-                formData.append('nonce', '<?php echo wp_create_nonce('bp_translate_nonce'); ?>');
-                formData.append('source', '<?php echo esc_js(bp_get_default_lang()); ?>');
+                formData.append('action', 'snel_translate');
+                formData.append('nonce', '<?php echo wp_create_nonce('snel_translate_nonce'); ?>');
+                formData.append('source', '<?php echo esc_js(snel_get_default_lang()); ?>');
                 formData.append('target', lang);
                 texts.forEach(function(t) { formData.append('texts[]', t); });
 
@@ -665,70 +665,70 @@ function bp_translations_page_script()
 
 // ---- Settings Page ---------------------------------------------------------
 
-function bp_translations_settings_render()
+function snel_translations_settings_render()
 {
     if (! current_user_can('manage_options')) {
         return;
     }
 
     // Handle save
-    if (isset($_POST['bp_settings_nonce']) && wp_verify_nonce($_POST['bp_settings_nonce'], 'bp_settings_save')) {
-        $api_key = sanitize_text_field($_POST['bp_openai_api_key'] ?? '');
-        $model   = sanitize_text_field($_POST['bp_openai_model'] ?? 'gpt-4o-mini');
+    if (isset($_POST['snel_settings_nonce']) && wp_verify_nonce($_POST['snel_settings_nonce'], 'snel_settings_save')) {
+        $api_key = sanitize_text_field($_POST['snel_openai_api_key'] ?? '');
+        $model   = sanitize_text_field($_POST['snel_openai_model'] ?? 'gpt-4o-mini');
 
-        update_option('bp_openai_api_key', $api_key, false);
-        update_option('bp_openai_model', $model, false);
+        update_option('snel_openai_api_key', $api_key, false);
+        update_option('snel_openai_model', $model, false);
 
-        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'boilerplate') . '</p></div>';
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'snel') . '</p></div>';
     }
 
-    $api_key   = get_option('bp_openai_api_key', '');
-    $model     = get_option('bp_openai_model', 'gpt-4o-mini');
-    $has_const = defined('BP_OPENAI_API_KEY') && constant('BP_OPENAI_API_KEY') !== '';
-    $config    = bp_get_languages_config();
+    $api_key   = get_option('snel_openai_api_key', '');
+    $model     = get_option('snel_openai_model', 'gpt-4o-mini');
+    $has_const = defined('SNEL_OPENAI_API_KEY') && constant('SNEL_OPENAI_API_KEY') !== '';
+    $config    = snel_get_languages_config();
     ?>
     <div class="wrap">
-        <h1><?php esc_html_e('Translation Settings', 'boilerplate'); ?></h1>
+        <h1><?php esc_html_e('Translation Settings', 'snel'); ?></h1>
 
         <form method="post">
-            <?php wp_nonce_field('bp_settings_save', 'bp_settings_nonce'); ?>
+            <?php wp_nonce_field('snel_settings_save', 'snel_settings_nonce'); ?>
 
             <table class="form-table">
                 <tr>
                     <th scope="row">
-                        <label><?php esc_html_e('AI Provider', 'boilerplate'); ?></label>
+                        <label><?php esc_html_e('AI Provider', 'snel'); ?></label>
                     </th>
                     <td>
                         <select disabled style="min-width: 200px;">
                             <option selected>OpenAI</option>
                         </select>
-                        <p class="description"><?php esc_html_e('More providers can be added later.', 'boilerplate'); ?></p>
+                        <p class="description"><?php esc_html_e('More providers can be added later.', 'snel'); ?></p>
                     </td>
                 </tr>
 
                 <tr>
                     <th scope="row">
-                        <label for="bp_openai_api_key"><?php esc_html_e('OpenAI API Key', 'boilerplate'); ?></label>
+                        <label for="snel_openai_api_key"><?php esc_html_e('OpenAI API Key', 'snel'); ?></label>
                     </th>
                     <td>
                         <?php if ($has_const) : ?>
-                            <input type="text" value="<?php esc_attr_e('Defined in wp-config.php', 'boilerplate'); ?>" disabled class="regular-text" style="background: #f0f0f0;">
+                            <input type="text" value="<?php esc_attr_e('Defined in wp-config.php', 'snel'); ?>" disabled class="regular-text" style="background: #f0f0f0;">
                             <p class="description" style="color: #00a32a;">
-                                <?php esc_html_e('API key is set via BP_OPENAI_API_KEY constant in wp-config.php. That takes priority over this field.', 'boilerplate'); ?>
+                                <?php esc_html_e('API key is set via SNEL_OPENAI_API_KEY constant in wp-config.php. That takes priority over this field.', 'snel'); ?>
                             </p>
                         <?php else : ?>
                             <input type="password"
-                                   id="bp_openai_api_key"
-                                   name="bp_openai_api_key"
+                                   id="snel_openai_api_key"
+                                   name="snel_openai_api_key"
                                    value="<?php echo esc_attr($api_key); ?>"
                                    class="regular-text"
                                    placeholder="sk-..."
                                    autocomplete="off">
-                            <button type="button" onclick="var f=document.getElementById('bp_openai_api_key');f.type=f.type==='password'?'text':'password';" class="button" style="vertical-align: top;">
-                                <?php esc_html_e('Show/Hide', 'boilerplate'); ?>
+                            <button type="button" onclick="var f=document.getElementById('snel_openai_api_key');f.type=f.type==='password'?'text':'password';" class="button" style="vertical-align: top;">
+                                <?php esc_html_e('Show/Hide', 'snel'); ?>
                             </button>
                             <p class="description">
-                                <?php esc_html_e('Get your API key from platform.openai.com. Alternatively, define BP_OPENAI_API_KEY in wp-config.php.', 'boilerplate'); ?>
+                                <?php esc_html_e('Get your API key from platform.openai.com. Alternatively, define SNEL_OPENAI_API_KEY in wp-config.php.', 'snel'); ?>
                             </p>
                         <?php endif; ?>
                     </td>
@@ -736,26 +736,26 @@ function bp_translations_settings_render()
 
                 <tr>
                     <th scope="row">
-                        <label for="bp_openai_model"><?php esc_html_e('Model', 'boilerplate'); ?></label>
+                        <label for="snel_openai_model"><?php esc_html_e('Model', 'snel'); ?></label>
                     </th>
                     <td>
-                        <select id="bp_openai_model" name="bp_openai_model" style="min-width: 200px;">
+                        <select id="snel_openai_model" name="snel_openai_model" style="min-width: 200px;">
                             <option value="gpt-4o-mini" <?php selected($model, 'gpt-4o-mini'); ?>>gpt-4o-mini (fast, cheap)</option>
                             <option value="gpt-4o" <?php selected($model, 'gpt-4o'); ?>>gpt-4o (best quality)</option>
                             <option value="gpt-3.5-turbo" <?php selected($model, 'gpt-3.5-turbo'); ?>>gpt-3.5-turbo (legacy, cheapest)</option>
                         </select>
-                        <p class="description"><?php esc_html_e('gpt-4o-mini is recommended for translations.', 'boilerplate'); ?></p>
+                        <p class="description"><?php esc_html_e('gpt-4o-mini is recommended for translations.', 'snel'); ?></p>
                     </td>
                 </tr>
 
                 <tr>
                     <th scope="row">
-                        <label><?php esc_html_e('Languages', 'boilerplate'); ?></label>
+                        <label><?php esc_html_e('Languages', 'snel'); ?></label>
                     </th>
                     <td>
-                        <?php foreach (bp_get_supported_langs() as $lang) :
+                        <?php foreach (snel_get_supported_langs() as $lang) :
                             $label   = $config[$lang]['label'] ?? strtoupper($lang);
-                            $is_default = $lang === bp_get_default_lang();
+                            $is_default = $lang === snel_get_default_lang();
                         ?>
                             <label style="display: inline-block; margin-right: 16px;">
                                 <input type="checkbox" checked disabled>
@@ -765,27 +765,27 @@ function bp_translations_settings_render()
                             </label>
                         <?php endforeach; ?>
                         <p class="description" style="margin-top: 8px;">
-                            <?php esc_html_e('To add/remove languages, edit inc/translations/config/languages.php.', 'boilerplate'); ?>
+                            <?php esc_html_e('To add/remove languages, edit inc/translations/config/languages.php.', 'snel'); ?>
                         </p>
                     </td>
                 </tr>
 
                 <tr>
-                    <th scope="row"><?php esc_html_e('Status', 'boilerplate'); ?></th>
+                    <th scope="row"><?php esc_html_e('Status', 'snel'); ?></th>
                     <td>
                         <?php
-                        $effective_key = $has_const ? constant('BP_OPENAI_API_KEY') : $api_key;
+                        $effective_key = $has_const ? constant('SNEL_OPENAI_API_KEY') : $api_key;
                         if (! empty($effective_key)) :
                         ?>
-                            <span style="color: #00a32a; font-weight: 600;">&#10003; <?php esc_html_e('API key configured — AI translation is active.', 'boilerplate'); ?></span>
+                            <span style="color: #00a32a; font-weight: 600;">&#10003; <?php esc_html_e('API key configured — AI translation is active.', 'snel'); ?></span>
                         <?php else : ?>
-                            <span style="color: #d63638; font-weight: 600;">&#10007; <?php esc_html_e('No API key — AI translation is disabled.', 'boilerplate'); ?></span>
+                            <span style="color: #d63638; font-weight: 600;">&#10007; <?php esc_html_e('No API key — AI translation is disabled.', 'snel'); ?></span>
                         <?php endif; ?>
                     </td>
                 </tr>
             </table>
 
-            <?php submit_button(__('Save Settings', 'boilerplate')); ?>
+            <?php submit_button(__('Save Settings', 'snel')); ?>
         </form>
     </div>
     <?php

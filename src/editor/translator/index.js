@@ -14,11 +14,11 @@ import { __ } from '@wordpress/i18n';
 import { translateTexts } from '../../blocks/components/lang-helpers';
 
 /**
- * Build LANGS array dynamically from bpTranslate.langs.
+ * Build LANGS array dynamically from snelTranslate.langs.
  */
 function getLangs() {
-	const langs = window.bpTranslate?.langs || ['nl', 'en'];
-	const defaultLang = window.bpTranslate?.default || 'nl';
+	const langs = window.snelTranslate?.langs || ['nl', 'en'];
+	const defaultLang = window.snelTranslate?.default || 'nl';
 	return langs.map((code) => ({
 		label: code === defaultLang ? `${code.toUpperCase()} (bron)` : code.toUpperCase(),
 		value: code,
@@ -31,7 +31,7 @@ function getLangs() {
  */
 function isTranslatable(val) {
 	if (!val || typeof val !== 'object' || Array.isArray(val)) return false;
-	const defaultLang = window.bpTranslate?.default || 'nl';
+	const defaultLang = window.snelTranslate?.default || 'nl';
 	return typeof val[defaultLang] === 'string';
 }
 
@@ -47,7 +47,7 @@ function stripTags(html) {
 
 /**
  * Get a human-readable block name from blockName.
- * "boilerplate/content-section" → "Content Section"
+ * "snel/content-section" → "Content Section"
  */
 function prettyBlockName(blockName) {
 	const short = blockName.replace(/^[^/]+\//, '');
@@ -59,7 +59,7 @@ function prettyBlockName(blockName) {
 
 function TranslationSidebarContent() {
 	const LANGS = getLangs();
-	const defaultLang = window.bpTranslate?.default || 'nl';
+	const defaultLang = window.snelTranslate?.default || 'nl';
 	const firstNonDefault = LANGS.find((l) => l.value !== defaultLang);
 	const [targetLang, setTargetLang] = useState(firstNonDefault?.value || 'en');
 	const [isTranslating, setIsTranslating] = useState(false);
@@ -142,7 +142,7 @@ function TranslationSidebarContent() {
 		});
 
 		if (toTranslate.length === 0) {
-			setStatus(__('All fields are already translated!', 'boilerplate'));
+			setStatus(__('All fields are already translated!', 'snel'));
 			setIsTranslating(false);
 			return;
 		}
@@ -156,9 +156,9 @@ function TranslationSidebarContent() {
 				updateField(block, field, targetLang, text);
 			});
 
-			setStatus(`${translated.length} ${__('fields translated!', 'boilerplate')}`);
+			setStatus(`${translated.length} ${__('fields translated!', 'snel')}`);
 		} catch (err) {
-			setStatus(`${__('Error:', 'boilerplate')} ${err.message}`);
+			setStatus(`${__('Error:', 'snel')} ${err.message}`);
 		}
 
 		setIsTranslating(false);
@@ -178,7 +178,7 @@ function TranslationSidebarContent() {
 
 	return (
 		<>
-			<PanelBody title={__('Language', 'boilerplate')} initialOpen>
+			<PanelBody title={__('Language', 'snel')} initialOpen>
 				<SelectControl
 					value={targetLang}
 					options={LANGS}
@@ -193,15 +193,15 @@ function TranslationSidebarContent() {
 						disabled={isTranslating || missingFields === 0}
 					>
 						{isTranslating
-							? __('Translating...', 'boilerplate')
-							: `${__('Translate All Missing', 'boilerplate')} (${missingFields})`}
+							? __('Translating...', 'snel')
+							: `${__('Translate All Missing', 'snel')} (${missingFields})`}
 					</Button>
 				</div>
 				{status && (
 					<p style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>{status}</p>
 				)}
 				<p style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
-					{totalFields} {__('fields', 'boilerplate')}, {missingFields} {__('missing', 'boilerplate')}
+					{totalFields} {__('fields', 'snel')}, {missingFields} {__('missing', 'snel')}
 				</p>
 			</PanelBody>
 
@@ -229,7 +229,7 @@ function TranslationSidebarContent() {
 								<TextareaControl
 									value={currentText}
 									onChange={(val) => updateField(block, field, targetLang, val)}
-									placeholder={__('Translation...', 'boilerplate')}
+									placeholder={__('Translation...', 'snel')}
 									rows={Math.min(Math.max(Math.ceil(srcText.length / 60), 2), 6)}
 									__nextHasNoMarginBottom
 								/>
@@ -241,18 +241,18 @@ function TranslationSidebarContent() {
 
 			{translatableBlocks.length === 0 && (
 				<PanelBody>
-					<p style={{ color: '#999' }}>{__('No translatable blocks found on this page.', 'boilerplate')}</p>
+					<p style={{ color: '#999' }}>{__('No translatable blocks found on this page.', 'snel')}</p>
 				</PanelBody>
 			)}
 		</>
 	);
 }
 
-registerPlugin('bp-translation-sidebar', {
+registerPlugin('snel-translation-sidebar', {
 	render: () => (
 		<PluginSidebar
-			name="bp-translation-sidebar"
-			title={__('Translations', 'boilerplate')}
+			name="snel-translation-sidebar"
+			title={__('Translations', 'snel')}
 			icon="translation"
 		>
 			<TranslationSidebarContent />

@@ -5,7 +5,7 @@
  *
  * DO NOT EDIT per project — configure via config/ files instead.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -20,7 +20,7 @@ require_once get_template_directory() . '/inc/translations/core/LocaleManager.ph
  *
  * @return array
  */
-function bp_get_languages_config()
+function snel_get_languages_config()
 {
     return LocaleManager::config();
 }
@@ -30,7 +30,7 @@ function bp_get_languages_config()
  *
  * @return array e.g. ['nl', 'en']
  */
-function bp_get_supported_langs()
+function snel_get_supported_langs()
 {
     return LocaleManager::supported();
 }
@@ -40,7 +40,7 @@ function bp_get_supported_langs()
  *
  * @return string e.g. 'nl'
  */
-function bp_get_default_lang()
+function snel_get_default_lang()
 {
     return LocaleManager::default();
 }
@@ -51,7 +51,7 @@ function bp_get_default_lang()
  *
  * @return string e.g. 'en'
  */
-function bp_get_lang()
+function snel_get_lang()
 {
     return LocaleManager::current();
 }
@@ -62,7 +62,7 @@ function bp_get_lang()
  * @param string $lang Language code to check.
  * @return bool
  */
-function bp_is_lang($lang)
+function snel_is_lang($lang)
 {
     return LocaleManager::is($lang);
 }
@@ -79,7 +79,7 @@ Router::register();
  *
  * @return array
  */
-function bp_get_cpt_slugs_config()
+function snel_get_cpt_slugs_config()
 {
     return UrlGenerator::cptSlugsConfig();
 }
@@ -94,7 +94,7 @@ function bp_get_cpt_slugs_config()
  * @param string $url Relative URL (e.g., '/contact/' or '/producten/my-item/')
  * @return string
  */
-function bp_url($url)
+function snel_url($url)
 {
     return UrlGenerator::url($url);
 }
@@ -105,7 +105,7 @@ function bp_url($url)
  * @param string $default_slug The default language (Dutch) page slug.
  * @return string
  */
-function bp_page_url($default_slug)
+function snel_page_url($default_slug)
 {
     return UrlGenerator::pageUrl($default_slug);
 }
@@ -116,7 +116,7 @@ function bp_page_url($default_slug)
  * @param WP_Post $item Nav menu item object.
  * @return string Translated URL.
  */
-function bp_nav_item_url($item)
+function snel_nav_item_url($item)
 {
     return UrlGenerator::navItemUrl($item);
 }
@@ -127,7 +127,7 @@ function bp_nav_item_url($item)
  * @param string $cpt_slug The default-language CPT slug.
  * @return string
  */
-function bp_cpt_url($cpt_slug)
+function snel_cpt_url($cpt_slug)
 {
     return UrlGenerator::cptUrl($cpt_slug);
 }
@@ -139,7 +139,7 @@ function bp_cpt_url($cpt_slug)
  * @param string      $cpt_slug The default-language CPT archive slug.
  * @return string
  */
-function bp_cpt_single_url($post, $cpt_slug)
+function snel_cpt_single_url($post, $cpt_slug)
 {
     return UrlGenerator::cptSingleUrl($post, $cpt_slug);
 }
@@ -150,7 +150,7 @@ function bp_cpt_single_url($post, $cpt_slug)
  * @param string $target_lang Language code to switch to (e.g., 'en')
  * @return string Full URL for that language
  */
-function bp_lang_url($target_lang)
+function snel_lang_url($target_lang)
 {
     return UrlGenerator::langUrl($target_lang);
 }
@@ -169,7 +169,7 @@ require_once get_template_directory() . '/inc/translations/core/Translator.php';
  * @param string $lang Language code.
  * @param string $text Translated text.
  */
-function bp_save_translation($key, $lang, $text)
+function snel_save_translation($key, $lang, $text)
 {
     Translator::save($key, $lang, $text);
 }
@@ -179,7 +179,7 @@ function bp_save_translation($key, $lang, $text)
  *
  * @return array ['Section' => ['nl_key' => ['nl' => '...', 'en' => '...', ...]]]
  */
-function bp_get_grouped_theme_translations()
+function snel_get_grouped_theme_translations()
 {
     return Translator::grouped();
 }
@@ -188,13 +188,13 @@ function bp_get_grouped_theme_translations()
  * Translate a static theme string.
  *
  * Usage in templates:
- *   <h1><?php echo bp__('Welkom'); ?></h1>
+ *   <h1><?php echo snel__('Welkom'); ?></h1>
  *   // Outputs "Welcome" if lang=en
  *
  * @param string $text The default-language (Dutch) text.
  * @return string Translated text, or original if no translation found.
  */
-function bp__($text)
+function snel__($text)
 {
     return Translator::translate($text);
 }
@@ -208,7 +208,7 @@ function bp__($text)
  * @param mixed $val A multilingual array or a plain string.
  * @return string The value for the current language.
  */
-function bp_val($val)
+function snel_val($val)
 {
     return Translator::value($val);
 }
@@ -220,13 +220,13 @@ function bp_val($val)
  * and extracting the current language.
  *
  * Usage in render.php:
- *   $heading = bp_attr($attributes, 'heading');
+ *   $heading = snel_attr($attributes, 'heading');
  *
  * @param array  $attributes Block attributes array.
  * @param string $key        The attribute key.
  * @return string The translated value.
  */
-function bp_attr($attributes, $key)
+function snel_attr($attributes, $key)
 {
     return Translator::attr($attributes, $key);
 }

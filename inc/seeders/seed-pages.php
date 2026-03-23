@@ -13,11 +13,11 @@
  *
  * Edit this file per project.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 // Content Section block helper
-function bp_seed_content_section($nl_html, $translations = [], $bg = 'white')
+function snel_seed_content_section($nl_html, $translations = [], $bg = 'white')
 {
     $attrs = [
         'bgMode'              => $bg,
@@ -26,9 +26,9 @@ function bp_seed_content_section($nl_html, $translations = [], $bg = 'white')
 
     $json = wp_json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-    return '<!-- wp:boilerplate/content-section ' . $json . ' -->'
+    return '<!-- wp:snel/content-section ' . $json . ' -->'
          . $nl_html
-         . '<!-- /wp:boilerplate/content-section -->';
+         . '<!-- /wp:snel/content-section -->';
 }
 
 return [
@@ -37,7 +37,7 @@ return [
         'slug'          => 'home',
         'slugs'         => [],
         'is_front_page' => true,
-        'content'       => bp_seed_content_section(
+        'content'       => snel_seed_content_section(
             '<!-- wp:heading --><h2>Welkom bij ons bedrijf</h2><!-- /wp:heading -->'
             . '<!-- wp:paragraph --><p>Wij zijn gespecialiseerd in het leveren van hoogwaardige oplossingen voor onze klanten. Met jarenlange ervaring en een passie voor kwaliteit helpen wij u graag verder.</p><!-- /wp:paragraph -->'
             . '<!-- wp:paragraph --><p>Neem gerust contact met ons op om te ontdekken wat wij voor u kunnen betekenen.</p><!-- /wp:paragraph -->',
@@ -58,7 +58,7 @@ return [
             'fr' => 'a-propos',
             'es' => 'sobre-nosotros',
         ],
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:heading --><h2>Over Ons</h2><!-- /wp:heading -->'
             . '<!-- wp:paragraph --><p>Ons team bestaat uit ervaren professionals die gepassioneerd zijn over wat ze doen. Wij geloven in transparantie, kwaliteit en samenwerking.</p><!-- /wp:paragraph -->'
             . '<!-- wp:paragraph --><p>Sinds onze oprichting hebben wij honderden klanten geholpen met hun projecten. Ons doel is om altijd de beste resultaten te leveren.</p><!-- /wp:paragraph -->',
@@ -79,7 +79,7 @@ return [
             'fr' => 'services',
             'es' => 'servicios',
         ],
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:heading --><h2>Onze Diensten</h2><!-- /wp:heading -->'
             . '<!-- wp:paragraph --><p>Wij bieden een breed scala aan diensten om aan uw behoeften te voldoen. Van advies tot uitvoering, wij staan voor u klaar.</p><!-- /wp:paragraph -->'
             . '<!-- wp:list --><ul><li>Webontwikkeling &amp; design</li><li>Digitale strategie &amp; advies</li><li>SEO &amp; online marketing</li><li>Onderhoud &amp; support</li></ul><!-- /wp:list -->',
@@ -100,7 +100,7 @@ return [
             'fr' => 'contact',
             'es' => 'contacto',
         ],
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:heading --><h2>Neem Contact Op</h2><!-- /wp:heading -->'
             . '<!-- wp:paragraph --><p>Heeft u vragen of wilt u meer weten over onze diensten? Neem gerust contact met ons op via onderstaande gegevens.</p><!-- /wp:paragraph -->'
             . '<!-- wp:paragraph --><p><strong>E-mail:</strong> info@example.com<br><strong>Telefoon:</strong> +31 (0)20 123 4567<br><strong>Adres:</strong> Voorbeeldstraat 1, 1234 AB Amsterdam</p><!-- /wp:paragraph -->',
@@ -121,7 +121,7 @@ return [
             'fr' => 'politique-de-confidentialite',
             'es' => 'politica-de-privacidad',
         ],
-        'content' => bp_seed_content_section(
+        'content' => snel_seed_content_section(
             '<!-- wp:heading --><h2>Privacybeleid</h2><!-- /wp:heading -->'
             . '<!-- wp:paragraph --><p>Wij respecteren uw privacy en verwerken uw persoonsgegevens in overeenstemming met de AVG. Dit privacybeleid beschrijft welke gegevens wij verzamelen en hoe wij deze gebruiken.</p><!-- /wp:paragraph -->',
             [

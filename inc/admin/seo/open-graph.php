@@ -6,7 +6,7 @@
  * Outputs og: and twitter: meta tags with the correct language
  * and translated content for the current page.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 if (! defined('ABSPATH')) {
@@ -16,15 +16,15 @@ if (! defined('ABSPATH')) {
 /**
  * Output Open Graph and Twitter Card meta tags in the <head>.
  */
-function bp_open_graph()
+function snel_open_graph()
 {
-    $lang    = bp_get_lang();
-    $default = bp_get_default_lang();
-    $config  = bp_get_languages_config();
+    $lang    = snel_get_lang();
+    $default = snel_get_default_lang();
+    $config  = snel_get_languages_config();
     $locale  = $config[$lang]['locale'] ?? 'en_US';
 
     $site_name = get_bloginfo('name');
-    $url       = bp_lang_url($lang);
+    $url       = snel_lang_url($lang);
 
     // Determine title
     $title = $site_name;
@@ -112,4 +112,4 @@ function bp_open_graph()
         echo '<meta name="twitter:image" content="' . esc_url($image) . '" />' . "\n";
     }
 }
-add_action('wp_head', 'bp_open_graph', 2);
+add_action('wp_head', 'snel_open_graph', 2);

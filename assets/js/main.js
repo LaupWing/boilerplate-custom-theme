@@ -1,7 +1,7 @@
 /**
  * Main theme JavaScript.
  *
- * @package Boilerplate
+ * @package Snel
  */
 
 (function () {
@@ -10,9 +10,9 @@
 	// -------------------------------------------------------------------------
 	// Language Switcher Popover
 	// -------------------------------------------------------------------------
-	const btn = document.getElementById('bp-lang-btn');
-	const popover = document.getElementById('bp-lang-popover');
-	const chevron = document.getElementById('bp-lang-chevron');
+	const btn = document.getElementById('snel-lang-btn');
+	const popover = document.getElementById('snel-lang-popover');
+	const chevron = document.getElementById('snel-lang-chevron');
 
 	if (!btn || !popover) return;
 
