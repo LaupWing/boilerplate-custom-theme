@@ -3,28 +3,13 @@
  *
  * Provides:
  * - blockProps on the outer div
- * - Editor badge with block label
+ * - Editor notice badge with block label
  * - Language toggle (reads from snelTranslate.langs)
- * - "Translate" button with loading state
- *
- * Usage (render props pattern):
- *   <EditorWrapper
- *       blockProps={blockProps}
- *       label="Hero Block"
- *       subtitle="Slide 1/5"
- *       onTranslate={handleTranslate}
- *   >
- *       {({ currentLang }) => (
- *           <RichText value={getLang(heading, currentLang)} ... />
- *       )}
- *   </EditorWrapper>
- *
- * Usage (simple, no language):
- *   <EditorWrapper blockProps={blockProps} label="My Block">
- *       <div>content</div>
- *   </EditorWrapper>
+ * - "Generate Translation" button with animated per-language progress
  */
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { SelectControl } from '@wordpress/components';
 
 // Build language list from snelTranslate global (set by translate.php)
 const LANGS = (window.snelTranslate?.langs || ['nl', 'en']).map((code) => ({
@@ -34,75 +19,125 @@ const LANGS = (window.snelTranslate?.langs || ['nl', 'en']).map((code) => ({
 
 const DEFAULT_LANG = window.snelTranslate?.default || 'nl';
 
-export default function EditorWrapper({ blockProps, label, subtitle, onTranslate, children }) {
+const MAX_WIDTH_CLASSES = {
+	narrow: 'max-w-3xl mx-auto',
+	wide: 'max-w-5xl mx-auto',
+};
+
+export default function EditorWrapper({ blockProps, label, subtitle, onTranslate, maxWidth, children }) {
 	const [currentLang, setCurrentLang] = useState(DEFAULT_LANG);
 	const [isTranslating, setIsTranslating] = useState(false);
+	const [buttonState, setButtonState] = useState(null);
+	const [animStyle, setAnimStyle] = useState({});
+
+	const animateButtonText = (text, phase) => {
+		return new Promise((resolve) => {
+			// Slide out upward
+			setAnimStyle({ transform: 'translateY(-100%)', opacity: 0, transition: 'all 0.2s ease-in' });
+			setTimeout(() => {
+				// Set new text, position below
+				setButtonState({ text, phase });
+				setAnimStyle({ transform: 'translateY(100%)', opacity: 0, transition: 'none' });
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						// Slide in from below
+						setAnimStyle({ transform: 'translateY(0)', opacity: 1, transition: 'all 0.25s ease-out' });
+						setTimeout(resolve, 250);
+					});
+				});
+			}, 200);
+		});
+	};
 
 	const handleTranslate = async () => {
 		if (!onTranslate || isTranslating) return;
 		setIsTranslating(true);
+
 		try {
-			await onTranslate(currentLang);
+			if (currentLang === DEFAULT_LANG) {
+				const langs = LANGS.filter(l => l.code !== DEFAULT_LANG);
+				for (const { code, label: langLabel } of langs) {
+					await animateButtonText(`Translating ${langLabel}...`, 'translating');
+					await onTranslate(code);
+					await animateButtonText(`${langLabel} ✓`, 'done');
+					await new Promise(r => setTimeout(r, 600));
+				}
+				await animateButtonText('All done ✓', 'done');
+				await new Promise(r => setTimeout(r, 1200));
+			} else {
+				const langLabel = LANGS.find(l => l.code === currentLang)?.label || currentLang.toUpperCase();
+				await animateButtonText(`Translating ${langLabel}...`, 'translating');
+				await onTranslate(currentLang);
+				await animateButtonText(`${langLabel} ✓`, 'done');
+				await new Promise(r => setTimeout(r, 1000));
+			}
 		} catch (err) {
-			console.error('Translation failed:', err);
+			console.error('[EditorWrapper] Translation error:', err);
 		} finally {
+			setButtonState(null);
+			setAnimStyle({});
 			setIsTranslating(false);
 		}
 	};
 
-	// Support both render props (function) and regular children
 	const content = typeof children === 'function'
 		? children({ currentLang })
 		: children;
 
+	const inner = maxWidth ? (
+		<div className={MAX_WIDTH_CLASSES[maxWidth] || ''}>{content}</div>
+	) : content;
+
 	return (
-		<div {...blockProps} style={{ ...blockProps.style, border: '2px dashed #d4d2cd', paddingLeft: 0, paddingRight: 0 }}>
-			{content}
+		<div {...blockProps} className={`${blockProps.className || ''} border-2 border-dashed border-border-light !px-0`}>
+			{inner}
 
 			{/* Editor Badge — top right */}
-			<div
-				className="absolute top-4 right-4 z-50 pointer-events-auto flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm"
-				style={{ fontSize: '13px' }}
-			>
+			<div className="absolute top-4 right-4 z-50 pointer-events-auto flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm text-[13px]">
 				{/* Block label */}
 				<span className="font-medium text-gray-800">
 					{label}{subtitle ? ` — ${subtitle}` : ''}
 				</span>
 
-				{/* Divider */}
 				<span className="w-px h-4 bg-gray-300 inline-block" />
 
-				{/* Language toggle */}
-				{LANGS.map(({ code, label: langLabel }) => (
-					<button
-						key={code}
-						type="button"
-						onClick={() => setCurrentLang(code)}
-						className={`px-2 py-1 rounded text-xs font-bold cursor-pointer transition-colors ${
-							currentLang === code
-								? 'bg-gray-800 text-white'
-								: 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-						}`}
-					>
-						{langLabel}
-					</button>
-				))}
+				{/* Language select */}
+				<SelectControl
+					value={currentLang}
+					options={LANGS.map(({ code, label: langLabel }) => ({ label: langLabel, value: code }))}
+					onChange={setCurrentLang}
+					__nextHasNoMarginBottom
+					style={{ minWidth: '70px', height: '30px', minHeight: 'unset' }}
+				/>
 
-				{/* Translate button — only shows on non-default language */}
-				{onTranslate && currentLang !== DEFAULT_LANG && (
+				{/* Translate button */}
+				{onTranslate && (
 					<>
 						<span className="w-px h-4 bg-gray-300 inline-block" />
 						<button
 							type="button"
 							onClick={handleTranslate}
 							disabled={isTranslating}
-							className={`px-2 py-1 rounded text-xs font-bold cursor-pointer transition-colors ${
-								isTranslating
-									? 'text-gray-400 cursor-wait'
-									: 'text-blue-600 hover:bg-blue-50'
+							className={`min-w-[120px] px-2.5 py-1 rounded text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 border-none overflow-hidden h-[26px] inline-flex items-center justify-center transition-colors ${
+								isTranslating ? 'cursor-wait' : 'cursor-pointer'
 							}`}
 						>
-							{isTranslating ? 'Translating...' : '⟳ Translate'}
+							{buttonState ? (
+								<span
+									className={`inline-block ${buttonState.phase === 'translating' ? 'animate-pulse' : ''}`}
+									style={animStyle}
+								>
+									{buttonState.phase === 'translating' && '✦ '}
+									{buttonState.text}
+								</span>
+							) : (
+								<span>
+									{currentLang === DEFAULT_LANG
+										? `✦ ${__('Translate All', 'snel')}`
+										: `✦ ${__('Translate', 'snel')}`
+									}
+								</span>
+							)}
 						</button>
 					</>
 				)}

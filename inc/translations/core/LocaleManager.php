@@ -26,6 +26,23 @@ class LocaleManager
     private static ?array $config = null;
 
     /**
+     * Language override (e.g. for REST API rendering).
+     *
+     * @var string|null
+     */
+    private static ?string $override = null;
+
+    /**
+     * Temporarily force a language (e.g. for REST API rendering).
+     *
+     * @param string|null $lang Language code, or null to clear the override.
+     */
+    public static function setOverride(?string $lang): void
+    {
+        self::$override = $lang;
+    }
+
+    /**
      * Load and cache the languages config.
      *
      * Returns the full array from config/languages.php, e.g.:
@@ -81,6 +98,11 @@ class LocaleManager
      */
     public static function current(): string
     {
+        // 0. Check override (e.g. REST API rendering)
+        if (self::$override !== null) {
+            return self::$override;
+        }
+
         // 1. Check query var (set by rewrite rules)
         $lang = get_query_var('lang', '');
 
