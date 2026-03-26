@@ -231,6 +231,52 @@ function snel_attr($attributes, $key)
     return Translator::attr($attributes, $key);
 }
 
+/**
+ * Get a translated taxonomy term name.
+ *
+ * @param WP_Term $term Term object.
+ * @return string Translated name or original.
+ */
+function snel_term_name($term)
+{
+    return Translator::termName($term);
+}
+
+/**
+ * Get a translated taxonomy term description.
+ *
+ * @param WP_Term $term Term object.
+ * @return string Translated description or original.
+ */
+function snel_term_desc($term)
+{
+    return Translator::termDesc($term);
+}
+
+/**
+ * Get a translated product/CPT title.
+ *
+ * @param int $post_id Post ID.
+ * @return string Translated title or original.
+ */
+function snel_product_title($post_id)
+{
+    return Translator::productTitle($post_id);
+}
+
+/**
+ * Get a translated value from a CPT post meta field.
+ * Handles both {nl, en, de} arrays and plain values.
+ *
+ * @param int    $post_id Post ID.
+ * @param string $key     Meta key.
+ * @return mixed Translated value.
+ */
+function snel_cpt_field($post_id, $key)
+{
+    return Translator::cptField($post_id, $key);
+}
+
 // Load and register SEO manager — hreflang, canonical, meta description, html lang.
 require_once get_template_directory() . '/inc/translations/seo/SeoManager.php';
 SeoManager::register();
@@ -238,6 +284,9 @@ SeoManager::register();
 // Load and register admin meta box — SEO & translations fields on post editor.
 require_once get_template_directory() . '/inc/translations/admin/AdminMetaBox.php';
 AdminMetaBox::register();
+
+// Load AI translation AJAX handler.
+require_once get_template_directory() . '/inc/translations/admin/translate.php';
 
 // ─── Snel SEO Integration ─────────────────────────────────────────────────
 
