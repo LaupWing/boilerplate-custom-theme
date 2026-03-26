@@ -70,7 +70,7 @@ function snel_translations_handle_save()
             $key = base64_decode($encoded_key);
             foreach ($langs as $lang => $text) {
                 $lang = sanitize_text_field($lang);
-                $text = sanitize_text_field($text);
+                $text = sanitize_text_field(wp_unslash($text));
                 snel_save_translation($key, $lang, $text);
             }
         }
@@ -673,8 +673,8 @@ function snel_translations_settings_render()
 
     // Handle save
     if (isset($_POST['snel_settings_nonce']) && wp_verify_nonce($_POST['snel_settings_nonce'], 'snel_settings_save')) {
-        $api_key = sanitize_text_field($_POST['snel_openai_api_key'] ?? '');
-        $model   = sanitize_text_field($_POST['snel_openai_model'] ?? 'gpt-4o-mini');
+        $api_key = sanitize_text_field(wp_unslash($_POST['snel_openai_api_key'] ?? ''));
+        $model   = sanitize_text_field(wp_unslash($_POST['snel_openai_model'] ?? 'gpt-4o-mini'));
 
         update_option('snel_openai_api_key', $api_key, false);
         update_option('snel_openai_model', $model, false);

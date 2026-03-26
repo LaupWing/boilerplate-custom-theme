@@ -159,7 +159,7 @@ class AdminMetaBox
 
             $title_key = 'snel_title_' . $lang;
             if (isset($_POST[$title_key])) {
-                $title = sanitize_text_field($_POST[$title_key]);
+                $title = sanitize_text_field(wp_unslash($_POST[$title_key]));
                 if ($title) {
                     update_post_meta($post_id, '_title_' . $lang, $title);
                 } else {
@@ -169,7 +169,7 @@ class AdminMetaBox
 
             $desc_key = 'snel_meta_desc_' . $lang;
             if (isset($_POST[$desc_key])) {
-                $desc = sanitize_text_field($_POST[$desc_key]);
+                $desc = sanitize_text_field(wp_unslash($_POST[$desc_key]));
                 if ($desc) {
                     update_post_meta($post_id, '_meta_desc_' . $lang, $desc);
                 } else {
