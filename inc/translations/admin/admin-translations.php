@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Translations Admin Page
+ * Translations Admin Page — React-powered
  *
  * Centralized page to view and manage all translations:
  * - Theme strings (header, footer, UI text)
@@ -15,7 +14,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-// ---- Register Menu ---------------------------------------------------------
+// ─── Register Menu ──────────────────────────────────────────────────────────
 
 function snel_translations_admin_menu()
 {
@@ -48,622 +47,238 @@ function snel_translations_admin_menu()
 }
 add_action('admin_menu', 'snel_translations_admin_menu');
 
-// ---- Handle Save -----------------------------------------------------------
+// ─── REST API Endpoints ─────────────────────────────────────────────────────
 
-function snel_translations_handle_save()
-{
-    if (! isset($_POST['snel_translations_nonce'])) {
-        return;
-    }
-    if (! wp_verify_nonce($_POST['snel_translations_nonce'], 'snel_translations_save')) {
-        return;
-    }
-    if (! current_user_can('manage_options')) {
-        return;
-    }
+add_action('rest_api_init', function () {
+    // Get all theme string translations (grouped by section).
+    register_rest_route('snel-translations/v1', '/theme-strings', array(
+        'methods'             => 'GET',
+        'callback'            => function () {
+            return rest_ensure_response(Translator::grouped());
+        },
+        'permission_callback' => function () { return current_user_can('manage_options'); },
+    ));
 
-    $tab = sanitize_text_field($_POST['snel_tab'] ?? 'theme');
-
-    if ($tab === 'theme' || $tab === 'menu') {
-        $items = $_POST['tr'] ?? [];
-        foreach ($items as $encoded_key => $langs) {
-            $key = base64_decode($encoded_key);
-            foreach ($langs as $lang => $text) {
-                $lang = sanitize_text_field($lang);
-                $text = sanitize_text_field(wp_unslash($text));
-                snel_save_translation($key, $lang, $text);
+    // Save theme string translations.
+    register_rest_route('snel-translations/v1', '/theme-strings', array(
+        'methods'             => 'POST',
+        'callback'            => function (WP_REST_Request $request) {
+            $translations = $request->get_json_params();
+            if (! is_array($translations)) {
+                return new WP_Error('invalid_data', 'Expected an object of translations.', array('status' => 400));
             }
-        }
-    }
 
-    $redirect = add_query_arg([
-        'page'  => 'snel-translations',
-        'tab'   => $tab,
-        'saved' => '1',
-    ], admin_url('admin.php'));
-    wp_safe_redirect($redirect);
-    exit;
-}
-add_action('admin_init', 'snel_translations_handle_save');
-
-// ---- Render Page -----------------------------------------------------------
-
-function snel_translations_page_render()
-{
-    if (! current_user_can('manage_options')) {
-        return;
-    }
-
-    $tab   = sanitize_text_field($_GET['tab'] ?? 'theme');
-    $saved = isset($_GET['saved']);
-    $langs = array_diff(snel_get_supported_langs(), [snel_get_default_lang()]);
-    ?>
-    <div class="wrap">
-        <h1><?php esc_html_e('Translations', 'snel'); ?></h1>
-
-        <?php if ($saved) : ?>
-            <div class="notice notice-success is-dismissible">
-                <p><?php esc_html_e('Translations saved.', 'snel'); ?></p>
-            </div>
-        <?php endif; ?>
-
-        <nav class="nav-tab-wrapper" style="margin-bottom: 20px;">
-            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=theme')); ?>"
-               class="nav-tab <?php echo $tab === 'theme' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Theme Strings', 'snel'); ?>
-            </a>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=menu')); ?>"
-               class="nav-tab <?php echo $tab === 'menu' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Menu', 'snel'); ?>
-            </a>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=snel-translations&tab=pages')); ?>"
-               class="nav-tab <?php echo $tab === 'pages' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e('Pages (Content)', 'snel'); ?>
-            </a>
-        </nav>
-
-        <?php if ($tab === 'pages') : ?>
-            <?php snel_translations_tab_pages($langs); ?>
-        <?php else : ?>
-        <form method="post" id="snel-translations-form">
-            <?php wp_nonce_field('snel_translations_save', 'snel_translations_nonce'); ?>
-            <input type="hidden" name="snel_tab" value="<?php echo esc_attr($tab); ?>">
-
-            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-                <button type="submit" class="button button-primary">
-                    <?php esc_html_e('Save Translations', 'snel'); ?>
-                </button>
-                <button type="button" id="snel-translate-all" class="button" style="display: flex; align-items: center; gap: 6px;">
-                    <span class="dashicons dashicons-translation" style="font-size: 16px; width: 16px; height: 16px;"></span>
-                    <?php esc_html_e('AI Translate All Missing', 'snel'); ?>
-                </button>
-                <span id="snel-translate-status" style="color: #666;"></span>
-            </div>
-
-            <?php
-            if ($tab === 'theme') {
-                snel_translations_tab_theme($langs);
-            } elseif ($tab === 'menu') {
-                snel_translations_tab_menu($langs);
+            foreach ($translations as $dutch_key => $langs) {
+                if (! is_array($langs)) continue;
+                foreach ($langs as $lang => $text) {
+                    snel_save_translation(
+                        sanitize_text_field($dutch_key),
+                        sanitize_key($lang),
+                        sanitize_text_field($text)
+                    );
+                }
             }
-            ?>
-        </form>
-        <?php endif; ?>
-    </div>
 
-    <?php snel_translations_page_script(); ?>
-    <?php
-}
+            return rest_ensure_response(array('success' => true));
+        },
+        'permission_callback' => function () { return current_user_can('manage_options'); },
+    ));
 
-// ---- Tab: Theme Strings ----------------------------------------------------
+    // Get all pages with their translatable blocks.
+    register_rest_route('snel-translations/v1', '/pages', array(
+        'methods'             => 'GET',
+        'callback'            => function () {
+            $pages = get_posts(array(
+                'post_type'      => array('page', 'post'),
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'orderby'        => 'menu_order title',
+                'order'          => 'ASC',
+            ));
 
-function snel_translations_tab_theme($langs)
+            $langs       = snel_get_supported_langs();
+            $default     = snel_get_default_lang();
+            $non_default = array_values(array_diff($langs, array($default)));
+            $result      = array();
+
+            foreach ($pages as $page) {
+                $blocks       = parse_blocks($page->post_content);
+                $translatable = snel_translations_extract_blocks($blocks, $non_default, $default);
+
+                // Count completeness.
+                $total  = 0;
+                $filled = 0;
+                foreach ($translatable as $block) {
+                    foreach ($block['attributes'] as $attr) {
+                        $total += count($non_default);
+                        foreach ($non_default as $lang) {
+                            if (! empty($attr['values'][$lang])) {
+                                $filled++;
+                            }
+                        }
+                    }
+                }
+
+                $result[] = array(
+                    'id'      => $page->ID,
+                    'title'   => $page->post_title,
+                    'editUrl' => get_edit_post_link($page->ID, 'raw'),
+                    'blocks'  => $translatable,
+                    'total'   => $total,
+                    'filled'  => $filled,
+                );
+            }
+
+            return rest_ensure_response($result);
+        },
+        'permission_callback' => function () { return current_user_can('manage_options'); },
+    ));
+});
+
+// ─── Block Extraction Helper ─────────────────────────────────────────────────
+
+function snel_translations_extract_blocks($blocks, $non_default, $default, &$result = array())
 {
-    $grouped = snel_get_grouped_theme_translations();
-    $total   = 0;
-    ?>
-    <?php foreach ($grouped as $section_name => $strings) :
-        $total += count($strings);
-    ?>
-        <h3 style="margin-top: 24px; margin-bottom: 8px;"><?php echo esc_html($section_name); ?></h3>
-        <table class="widefat striped" style="margin-bottom: 16px;">
-            <thead>
-                <tr>
-                    <th style="width: 25%;">
-                        <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> (source)
-                    </th>
-                    <?php foreach ($langs as $lang) : ?>
-                        <th><?php echo esc_html(strtoupper($lang)); ?></th>
-                    <?php endforeach; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($strings as $nl_key => $translations) :
-                    $encoded = base64_encode($nl_key);
-                ?>
-                    <tr>
-                        <td>
-                            <input type="hidden" class="snel-source-text" value="<?php echo esc_attr($nl_key); ?>">
-                            <input type="text"
-                                   name="tr[<?php echo esc_attr($encoded); ?>][<?php echo esc_attr(snel_get_default_lang()); ?>]"
-                                   value="<?php echo esc_attr($translations[snel_get_default_lang()] ?? $nl_key); ?>"
-                                   class="large-text"
-                                   style="font-weight: 600;">
-                        </td>
-                        <?php foreach ($langs as $lang) :
-                            $value = $translations[$lang] ?? '';
-                        ?>
-                            <td>
-                                <input type="text"
-                                       name="tr[<?php echo esc_attr($encoded); ?>][<?php echo esc_attr($lang); ?>]"
-                                       value="<?php echo esc_attr($value); ?>"
-                                       class="large-text snel-translation-input"
-                                       data-lang="<?php echo esc_attr($lang); ?>"
-                                       placeholder="<?php echo esc_attr($value ? '' : '— empty —'); ?>"
-                                       style="<?php echo empty($value) ? 'border-color: #d63638; background: #fef7f7;' : ''; ?>">
-                            </td>
-                        <?php endforeach; ?>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endforeach; ?>
-    <p class="description" style="margin-top: 8px;">
-        <?php printf(
-            esc_html__('%d strings across %d sections. Empty fields are highlighted in red.', 'snel'),
-            $total,
-            count($grouped)
-        ); ?>
-    </p>
-    <?php
-}
+    foreach ($blocks as $block) {
+        if (! empty($block['blockName']) && strpos($block['blockName'], 'snel/') === 0) {
+            $attrs              = $block['attrs'] ?? array();
+            $translatable_attrs = array();
 
-// ---- Tab: Menu -------------------------------------------------------------
-
-function snel_translations_tab_menu($langs)
-{
-    $locations = get_nav_menu_locations();
-
-    if (empty($locations['primary'])) {
-        echo '<p>No primary menu assigned. Go to <a href="' . esc_url(admin_url('nav-menus.php')) . '">Appearance &gt; Menus</a> and assign a menu to the Primary location.</p>';
-        return;
-    }
-
-    $menu_items = wp_get_nav_menu_items($locations['primary']);
-
-    if (empty($menu_items)) {
-        echo '<p>No menu items found.</p>';
-        return;
-    }
-
-    $db = get_option('snel_theme_translations', []);
-    ?>
-    <h3 style="margin-top: 16px; margin-bottom: 8px;">Primary Menu</h3>
-    <p style="color: #666; margin-bottom: 12px;">
-        Add translations for each menu item. The <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> column is the source title from Appearance &gt; Menus.
-    </p>
-    <table class="widefat striped">
-        <thead>
-            <tr>
-                <th style="width: 25%;">
-                    <?php echo esc_html(strtoupper(snel_get_default_lang())); ?> (source)
-                </th>
-                <?php foreach ($langs as $lang) : ?>
-                    <th><?php echo esc_html(strtoupper($lang)); ?></th>
-                <?php endforeach; ?>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($menu_items as $item) :
-                $label  = trim($item->title);
-                $key    = base64_encode($label);
-
-                // Calculate depth for indentation
-                $depth  = 0;
-                $parent = $item->menu_item_parent;
-                while ($parent) {
-                    $depth++;
-                    $found = false;
-                    foreach ($menu_items as $mi) {
-                        if ((int) $mi->ID === (int) $parent) {
-                            $parent = $mi->menu_item_parent;
-                            $found  = true;
+            foreach ($attrs as $key => $value) {
+                if (is_array($value) && ! isset($value[0])) {
+                    $has_lang_keys = false;
+                    foreach ($value as $k => $v) {
+                        if (in_array($k, array_merge(array($default), $non_default), true) && is_string($v)) {
+                            $has_lang_keys = true;
                             break;
                         }
                     }
-                    if (! $found) {
-                        break;
+
+                    if ($has_lang_keys) {
+                        $translatable_attrs[] = array(
+                            'key'    => $key,
+                            'values' => $value,
+                        );
                     }
                 }
-                $indent = $depth * 24;
-            ?>
-                <tr>
-                    <td style="<?php echo $indent ? 'padding-left: ' . (12 + $indent) . 'px;' : ''; ?>">
-                        <?php if ($depth > 0) : ?>
-                            <span style="color: #bbb; margin-right: 4px;">&mdash;</span>
-                        <?php endif; ?>
-                        <input type="hidden" name="tr[<?php echo esc_attr($key); ?>][<?php echo esc_attr(snel_get_default_lang()); ?>]" value="<?php echo esc_attr($label); ?>">
-                        <strong style="font-size: 13px;"><?php echo esc_html($label); ?></strong>
-                    </td>
-                    <?php foreach ($langs as $lang) :
-                        $value = $db[$label][$lang] ?? '';
-                    ?>
-                        <td>
-                            <input type="text"
-                                   name="tr[<?php echo esc_attr($key); ?>][<?php echo esc_attr($lang); ?>]"
-                                   value="<?php echo esc_attr($value); ?>"
-                                   class="large-text snel-translation-input"
-                                   data-lang="<?php echo esc_attr($lang); ?>"
-                                   placeholder="<?php echo esc_attr($label); ?>"
-                                   <?php if (empty($value)) {
-                                       echo 'style="border-color: #f0b849;"';
-                                   } ?>>
-                        </td>
-                    <?php endforeach; ?>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-    <?php
-}
-
-// ---- Tab: Pages (Content) --------------------------------------------------
-
-/**
- * Recursively extract translatable {lang: '...'} fields from block attributes.
- */
-function snel_extract_translatable_fields($attrs, $prefix = '')
-{
-    $fields  = [];
-    $default = snel_get_default_lang();
-    $langs   = snel_get_supported_langs();
-
-    foreach ($attrs as $key => $value) {
-        $path = $prefix ? "{$prefix}.{$key}" : $key;
-
-        // Direct translatable object: has default lang key + at least one other
-        if (is_array($value) && isset($value[$default]) && ! isset($value[0])) {
-            $has_lang_keys = false;
-            foreach ($langs as $l) {
-                if ($l !== $default && array_key_exists($l, $value)) {
-                    $has_lang_keys = true;
-                    break;
-                }
             }
-            if ($has_lang_keys) {
-                $fields[] = ['key' => $path, 'value' => $value];
-                continue;
+
+            if (! empty($translatable_attrs)) {
+                $result[] = array(
+                    'name'       => $block['blockName'],
+                    'label'      => str_replace('snel/', '', $block['blockName']),
+                    'attributes' => $translatable_attrs,
+                );
             }
         }
 
-        // Sequential array (slides, links, buttons)
-        if (is_array($value) && isset($value[0]) && is_array($value[0])) {
-            foreach ($value as $i => $item) {
-                if (! is_array($item)) {
-                    continue;
-                }
-                $nested = snel_extract_translatable_fields($item, "{$path}[{$i}]");
-                $fields = array_merge($fields, $nested);
+        if (! empty($block['innerBlocks'])) {
+            snel_translations_extract_blocks($block['innerBlocks'], $non_default, $default, $result);
+        }
+    }
+
+    return $result;
+}
+
+// ─── Menu Items Helper ───────────────────────────────────────────────────────
+
+function snel_translations_get_menu_items()
+{
+    $locations = get_nav_menu_locations();
+    $items     = array();
+    $db        = get_option('snel_theme_translations', array());
+    $langs     = array_diff(snel_get_supported_langs(), array(snel_get_default_lang()));
+
+    // Get file translations for defaults.
+    $file_translations = array();
+    $translations_file = get_template_directory() . '/inc/translations/translations.php';
+    if (file_exists($translations_file)) {
+        $raw = require $translations_file;
+        foreach ($raw as $section => $strings) {
+            if (is_array($strings) && ! isset($strings['en'])) {
+                $file_translations = array_merge($file_translations, $strings);
             }
         }
     }
 
-    return $fields;
-}
+    foreach ($locations as $location => $menu_id) {
+        if (! $menu_id) continue;
+        $menu_items = wp_get_nav_menu_items($menu_id);
+        if (! $menu_items) continue;
 
-function snel_translations_tab_pages($langs)
-{
-    $pages = get_posts([
-        'post_type'      => ['page', 'post'],
-        'posts_per_page' => -1,
-        'orderby'        => 'title',
-        'order'          => 'ASC',
-        'post_status'    => 'publish',
-    ]);
+        foreach ($menu_items as $menu_item) {
+            $title        = $menu_item->title;
+            $translations = array();
 
-    if (empty($pages)) {
-        echo '<p>' . esc_html__('No published pages found.', 'snel') . '</p>';
-        return;
-    }
-
-    $default_lang = snel_get_default_lang();
-    $page_data    = [];
-
-    foreach ($pages as $page) {
-        $blocks      = parse_blocks($page->post_content);
-        $page_blocks = [];
-
-        foreach ($blocks as $block) {
-            if (empty($block['blockName']) || strpos($block['blockName'], 'snel/') !== 0) {
-                continue;
-            }
-
-            $fields = snel_extract_translatable_fields($block['attrs'] ?? []);
-            if (empty($fields)) {
-                continue;
-            }
-
-            $stats = [];
             foreach ($langs as $lang) {
-                $filled = 0;
-                $total  = 0;
-                foreach ($fields as $field) {
-                    $nl_val = trim($field['value'][$default_lang] ?? '');
-                    if (empty($nl_val)) {
-                        continue;
-                    }
-                    $total++;
-                    $val = trim($field['value'][$lang] ?? '');
-                    if (! empty($val)) {
-                        $filled++;
-                    }
+                if (! empty($db[$title][$lang])) {
+                    $translations[$lang] = $db[$title][$lang];
+                } elseif (! empty($file_translations[$title][$lang])) {
+                    $translations[$lang] = $file_translations[$title][$lang];
+                } else {
+                    $translations[$lang] = '';
                 }
-                $stats[$lang] = ['filled' => $filled, 'total' => $total];
             }
 
-            $page_blocks[] = [
-                'name'   => $block['blockName'],
-                'title'  => str_replace('snel/', '', $block['blockName']),
-                'fields' => $fields,
-                'stats'  => $stats,
-            ];
-        }
-
-        if (! empty($page_blocks)) {
-            $page_data[] = [
-                'id'     => $page->ID,
-                'title'  => $page->post_title,
-                'slug'   => $page->post_name,
-                'type'   => $page->post_type,
-                'blocks' => $page_blocks,
-            ];
+            $items[] = array(
+                'id'           => $menu_item->ID,
+                'title'        => $title,
+                'translations' => $translations,
+                'menu'         => $location,
+                'menuName'     => wp_get_nav_menu_object($menu_id)->name ?? $location,
+                'parent'       => (int) $menu_item->menu_item_parent,
+            );
         }
     }
 
-    if (empty($page_data)) {
-        echo '<p>' . esc_html__('No pages with translatable blocks found.', 'snel') . '</p>';
-        return;
-    }
-    ?>
-
-    <p class="description" style="margin-bottom: 16px;">
-        <?php esc_html_e('Read-only overview of Gutenberg block translations per page. Click "Edit" to open the page editor.', 'snel'); ?>
-    </p>
-
-    <?php foreach ($page_data as $page) :
-        $edit_url = admin_url('post.php?post=' . $page['id'] . '&action=edit');
-    ?>
-        <div style="margin-bottom: 24px; border: 1px solid #c3c4c7; background: #fff;">
-            <div style="padding: 12px 16px; border-bottom: 1px solid #c3c4c7; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                    <strong style="font-size: 14px;"><?php echo esc_html($page['title']); ?></strong>
-                    <span style="color: #787c82; margin-left: 8px;">/<?php echo esc_html($page['slug']); ?></span>
-                </div>
-                <a href="<?php echo esc_url($edit_url); ?>" class="button button-small">
-                    <?php esc_html_e('Edit Page', 'snel'); ?>
-                </a>
-            </div>
-            <table class="widefat" style="border: 0; border-radius: 0;">
-                <thead>
-                    <tr>
-                        <th style="width: 25%;"><?php esc_html_e('Block', 'snel'); ?></th>
-                        <th style="width: 10%;"><?php echo esc_html(strtoupper($default_lang)); ?></th>
-                        <?php foreach ($langs as $lang) : ?>
-                            <th style="width: 10%;"><?php echo esc_html(strtoupper($lang)); ?></th>
-                        <?php endforeach; ?>
-                        <th style="width: 10%;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($page['blocks'] as $bi => $block) :
-                        $block_edit_url = add_query_arg('snelScrollTo', $block['name'], $edit_url);
-                        $row_id = 'snel-detail-' . $page['id'] . '-' . $bi;
-
-                        $nl_filled = 0;
-                        $nl_total  = count($block['fields']);
-                        foreach ($block['fields'] as $field) {
-                            if (! empty(trim($field['value'][$default_lang] ?? ''))) {
-                                $nl_filled++;
-                            }
-                        }
-                    ?>
-                        <tr class="snel-block-row" data-detail="<?php echo esc_attr($row_id); ?>" style="cursor: pointer;">
-                            <td>
-                                <span class="snel-toggle-arrow" style="display: inline-block; width: 16px; font-size: 11px; color: #787c82;">&#9654;</span>
-                                <strong><?php echo esc_html(ucwords(str_replace('-', ' ', $block['title']))); ?></strong>
-                                <br><small style="color: #787c82; margin-left: 16px;"><?php echo esc_html(count($block['fields'])); ?> translatable fields</small>
-                            </td>
-                            <td>
-                                <span style="color: <?php echo $nl_filled === $nl_total ? '#00a32a' : '#d63638'; ?>; font-weight: 600;">
-                                    <?php echo esc_html("{$nl_filled}/{$nl_total}"); ?>
-                                </span>
-                            </td>
-                            <?php foreach ($langs as $lang) :
-                                $stat        = $block['stats'][$lang];
-                                $is_complete = $stat['total'] === 0 || $stat['filled'] === $stat['total'];
-                            ?>
-                                <td>
-                                    <span style="color: <?php echo $is_complete ? '#00a32a' : '#d63638'; ?>; font-weight: 600;">
-                                        <?php echo esc_html("{$stat['filled']}/{$stat['total']}"); ?>
-                                    </span>
-                                </td>
-                            <?php endforeach; ?>
-                            <td>
-                                <a href="<?php echo esc_url($block_edit_url); ?>" class="button button-small" onclick="event.stopPropagation();">
-                                    <?php esc_html_e('Edit', 'snel'); ?> &rarr;
-                                </a>
-                            </td>
-                        </tr>
-                        <?php foreach ($block['fields'] as $field) :
-                            $nl_val = trim($field['value'][$default_lang] ?? '');
-                            $label  = preg_replace('/\[(\d+)\]/', '.$1', $field['key']);
-                        ?>
-                            <tr class="<?php echo esc_attr($row_id); ?>" style="display: none; background: #f9f9f9;">
-                                <td style="padding-left: 32px;">
-                                    <code style="font-size: 12px;"><?php echo esc_html($label); ?></code>
-                                    <?php if ($nl_val) : ?>
-                                        <br><small style="color: #50575e; max-width: 250px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            <?php echo esc_html(wp_trim_words(wp_strip_all_tags($nl_val), 8, '...')); ?>
-                                        </small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if (! empty($nl_val)) : ?>
-                                        <span style="color: #00a32a;">&#10003;</span>
-                                    <?php else : ?>
-                                        <span style="color: #d63638;">&#10007;</span>
-                                    <?php endif; ?>
-                                </td>
-                                <?php foreach ($langs as $lang) :
-                                    $val = trim($field['value'][$lang] ?? '');
-                                ?>
-                                    <td>
-                                        <?php if (empty($nl_val)) : ?>
-                                            <span style="color: #787c82;">&mdash;</span>
-                                        <?php elseif (! empty($val)) : ?>
-                                            <span style="color: #00a32a;">&#10003;</span>
-                                        <?php else : ?>
-                                            <span style="color: #d63638;">&#10007;</span>
-                                        <?php endif; ?>
-                                    </td>
-                                <?php endforeach; ?>
-                                <td></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endforeach; ?>
-
-    <p class="description">
-        <?php printf(
-            esc_html__('%d pages with %d translatable blocks.', 'snel'),
-            count($page_data),
-            array_sum(array_map(function ($p) {
-                return count($p['blocks']);
-            }, $page_data))
-        ); ?>
-    </p>
-
-    <script>
-    (function() {
-        document.querySelectorAll('.snel-block-row').forEach(function(row) {
-            row.addEventListener('click', function() {
-                var id = row.getAttribute('data-detail');
-                var details = document.querySelectorAll('.' + id);
-                var arrow = row.querySelector('.snel-toggle-arrow');
-                var open = details[0] && details[0].style.display !== 'none';
-                details.forEach(function(r) { r.style.display = open ? 'none' : 'table-row'; });
-                if (arrow) arrow.innerHTML = open ? '&#9654;' : '&#9660;';
-            });
-        });
-    })();
-    </script>
-    <?php
+    return $items;
 }
 
-// ---- JavaScript: AI Translate All ------------------------------------------
+// ─── Enqueue React App ──────────────────────────────────────────────────────
 
-function snel_translations_page_script()
+add_action('admin_enqueue_scripts', function ($hook) {
+    if (! in_array($hook, array('toplevel_page_snel-translations'), true)) return;
+
+    $admin_dir  = get_template_directory() . '/build/admin/translations/';
+    $admin_url  = get_template_directory_uri() . '/build/admin/translations/';
+    $asset_file = $admin_dir . 'index.asset.php';
+    if (! file_exists($asset_file)) return;
+
+    $asset = require $asset_file;
+
+    wp_enqueue_script('snel-translations-admin', $admin_url . 'index.js', $asset['dependencies'], $asset['version'], true);
+    wp_enqueue_style('snel-translations-admin', $admin_url . 'index.css', array('wp-components'), $asset['version']);
+
+    $languages    = snel_get_supported_langs();
+    $default_lang = snel_get_default_lang();
+    $config       = include get_template_directory() . '/inc/translations/config/languages.php';
+
+    wp_localize_script('snel-translations-admin', 'snelTranslations', array(
+        'restUrl'      => rest_url('snel-translations/v1'),
+        'nonce'        => wp_create_nonce('wp_rest'),
+        'languages'    => array_map(function ($code) use ($default_lang, $config) {
+            return array(
+                'code'    => $code,
+                'label'   => $config[$code]['label'] ?? strtoupper($code),
+                'default' => $code === $default_lang,
+            );
+        }, $languages),
+        'defaultLang'  => $default_lang,
+        'themeStrings' => Translator::grouped(),
+        'menuItems'    => snel_translations_get_menu_items(),
+        'menuEditUrl'  => admin_url('nav-menus.php'),
+    ));
+});
+
+// ─── Render Page ────────────────────────────────────────────────────────────
+
+function snel_translations_page_render()
 {
-    ?>
-    <script>
-    (function() {
-        var btn    = document.getElementById('snel-translate-all');
-        var status = document.getElementById('snel-translate-status');
-        if (!btn) return;
-
-        btn.addEventListener('click', function() {
-            var targetLangs = <?php echo wp_json_encode(array_values(array_diff(snel_get_supported_langs(), [snel_get_default_lang()]))); ?>;
-
-            var work = {};
-            targetLangs.forEach(function(lang) { work[lang] = []; });
-
-            var rows = document.querySelectorAll('#snel-translations-form tbody tr');
-            rows.forEach(function(row) {
-                var sourceEl = row.querySelector('.snel-source-text');
-                if (!sourceEl) return;
-                var sourceText = (sourceEl.value || sourceEl.textContent || '').trim();
-                if (!sourceText) return;
-
-                var inputs = row.querySelectorAll('.snel-translation-input');
-                inputs.forEach(function(input) {
-                    var lang = input.dataset.lang;
-                    var val  = (input.value || input.textContent || '').trim();
-                    if (!val && work[lang]) {
-                        work[lang].push({ input: input, sourceText: sourceText });
-                    }
-                });
-            });
-
-            var total = 0;
-            targetLangs.forEach(function(lang) { total += work[lang].length; });
-
-            if (total === 0) {
-                status.textContent = 'All translations are filled!';
-                return;
-            }
-
-            btn.disabled = true;
-            status.textContent = 'Translating ' + total + ' texts...';
-
-            var done   = 0;
-            var errors = 0;
-
-            var promises = targetLangs.map(function(lang) {
-                var items = work[lang];
-                if (items.length === 0) return Promise.resolve();
-
-                var texts    = items.map(function(item) { return item.sourceText; });
-                var formData = new FormData();
-                formData.append('action', 'snel_translate');
-                formData.append('nonce', '<?php echo wp_create_nonce('snel_translate_nonce'); ?>');
-                formData.append('source', '<?php echo esc_js(snel_get_default_lang()); ?>');
-                formData.append('target', lang);
-                texts.forEach(function(t) { formData.append('texts[]', t); });
-
-                return fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    body: formData
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.success && data.data.translations) {
-                        data.data.translations.forEach(function(translated, i) {
-                            if (items[i] && items[i].input) {
-                                items[i].input.value = translated;
-                                items[i].input.style.borderColor = '#00a32a';
-                                items[i].input.style.background = '#f0fff0';
-                                done++;
-                            }
-                        });
-                    } else {
-                        errors += items.length;
-                        console.error('Translation error for ' + lang + ':', data);
-                    }
-                })
-                .catch(function(err) {
-                    errors += items.length;
-                    console.error('Fetch error for ' + lang + ':', err);
-                });
-            });
-
-            Promise.all(promises).then(function() {
-                btn.disabled = false;
-                var msg = done + ' translations filled.';
-                if (errors > 0) msg += ' ' + errors + ' failed.';
-                msg += ' Click "Save Translations" to keep them.';
-                status.textContent = msg;
-            });
-        });
-    })();
-    </script>
-    <?php
+    if (! current_user_can('manage_options')) return;
+    echo '<div class="wrap"><div id="snel-translations-root"></div></div>';
 }
 
-// ---- Settings Page ---------------------------------------------------------
+// ─── Settings Page ──────────────────────────────────────────────────────────
 
 function snel_translations_settings_render()
 {
@@ -754,7 +369,7 @@ function snel_translations_settings_render()
                     </th>
                     <td>
                         <?php foreach (snel_get_supported_langs() as $lang) :
-                            $label   = $config[$lang]['label'] ?? strtoupper($lang);
+                            $label      = $config[$lang]['label'] ?? strtoupper($lang);
                             $is_default = $lang === snel_get_default_lang();
                         ?>
                             <label style="display: inline-block; margin-right: 16px;">
