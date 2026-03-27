@@ -13,7 +13,6 @@ if (! defined('ABSPATH')) {
 
 // Translation system
 require get_template_directory() . '/inc/translations/language.php';
-require get_template_directory() . '/inc/translations/admin/translate.php';
 
 if (is_admin()) {
     require get_template_directory() . '/inc/translations/admin/admin-translations.php';
