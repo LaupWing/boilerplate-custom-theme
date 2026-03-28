@@ -89,7 +89,7 @@ add_action('rest_api_init', function () {
         'methods'             => 'GET',
         'callback'            => function () {
             $pages = get_posts(array(
-                'post_type'      => array('page', 'post'),
+                'post_type'      => 'page',
                 'post_status'    => 'publish',
                 'posts_per_page' => -1,
                 'orderby'        => 'menu_order title',
