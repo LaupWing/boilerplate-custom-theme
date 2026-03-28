@@ -3,7 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { ExternalLink, Loader2, ChevronDown, ChevronRight, Check, AlertCircle, Search } from 'lucide-react';
 import Highlight from '../components/Highlight';
 
-export default function Pages() {
+export default function Pages( { initialSearch = '', initialPageId = null } ) {
     const languages = window.snelTranslations?.languages || [];
     const defaultLang = window.snelTranslations?.defaultLang || 'nl';
     const nonDefaultLangs = languages.filter( ( l ) => ! l.default );
@@ -20,7 +20,9 @@ export default function Pages() {
                 } );
                 const data = await res.json();
                 setPages( Array.isArray( data ) ? data : [] );
-                if ( data.length > 0 ) {
+                if ( initialPageId && data.some( ( p ) => p.id === initialPageId ) ) {
+                    setActivePage( initialPageId );
+                } else if ( data.length > 0 ) {
                     setActivePage( data[0].id );
                 }
             } catch {
@@ -76,14 +78,14 @@ export default function Pages() {
             </div>
 
             {/* Page content */ }
-            { currentPage && <PageDetail page={ currentPage } nonDefaultLangs={ nonDefaultLangs } defaultLang={ defaultLang } /> }
+            { currentPage && <PageDetail page={ currentPage } nonDefaultLangs={ nonDefaultLangs } defaultLang={ defaultLang } initialSearch={ initialSearch } /> }
         </div>
     );
 }
 
-function PageDetail( { page, nonDefaultLangs, defaultLang } ) {
+function PageDetail( { page, nonDefaultLangs, defaultLang, initialSearch = '' } ) {
     const [ collapsed, setCollapsed ] = useState( {} );
-    const [ searchQuery, setSearchQuery ] = useState( '' );
+    const [ searchQuery, setSearchQuery ] = useState( initialSearch );
 
     const toggleBlock = ( index ) => {
         setCollapsed( ( prev ) => ( { ...prev, [ index ]: ! prev[ index ] } ) );

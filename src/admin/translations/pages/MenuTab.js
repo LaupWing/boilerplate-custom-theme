@@ -4,7 +4,7 @@ import { Save, ExternalLink, Search } from 'lucide-react';
 import Highlight from '../components/Highlight';
 import EditableCell from '../components/EditableCell';
 
-export default function MenuTab() {
+export default function MenuTab( { initialSearch = '' } ) {
     const languages = window.snelTranslations?.languages || [];
     const defaultLang = window.snelTranslations?.defaultLang || 'nl';
     const nonDefaultLangs = languages.filter( ( l ) => ! l.default );
@@ -13,7 +13,7 @@ export default function MenuTab() {
     const [ items, setItems ] = useState( () => window.snelTranslations?.menuItems || [] );
     const [ saving, setSaving ] = useState( false );
     const [ notice, setNotice ] = useState( null );
-    const [ searchQuery, setSearchQuery ] = useState( '' );
+    const [ searchQuery, setSearchQuery ] = useState( initialSearch );
 
     const updateTranslation = ( title, lang, value ) => {
         setItems( ( prev ) => prev.map( ( item ) => {

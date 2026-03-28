@@ -135,13 +135,44 @@ add_action('rest_api_init', function () {
     ));
 });
 
+// ─── Block Defaults Helper ───────────────────────────────────────────────────
+
+/**
+ * Merge block.json default attributes into a block's saved attrs.
+ * parse_blocks() does not apply defaults — only the renderer does.
+ */
+function snel_translations_merge_block_defaults($block_name, $attrs)
+{
+    $slug  = str_replace('snel/', '', $block_name);
+    $paths = array(
+        get_template_directory() . '/build/blocks/' . $slug . '/block.json',
+        get_template_directory() . '/src/blocks/' . $slug . '/block.json',
+    );
+
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            $meta = json_decode(file_get_contents($path), true);
+            if (! empty($meta['attributes'])) {
+                foreach ($meta['attributes'] as $key => $def) {
+                    if (! isset($attrs[$key]) && isset($def['default'])) {
+                        $attrs[$key] = $def['default'];
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    return $attrs;
+}
+
 // ─── Block Extraction Helper ─────────────────────────────────────────────────
 
 function snel_translations_extract_blocks($blocks, $non_default, $default, &$result = array())
 {
     foreach ($blocks as $block) {
         if (! empty($block['blockName']) && strpos($block['blockName'], 'snel/') === 0) {
-            $attrs              = $block['attrs'] ?? array();
+            $attrs = snel_translations_merge_block_defaults($block['blockName'], $block['attrs'] ?? array());
             $translatable_attrs = array();
 
             foreach ($attrs as $key => $value) {
@@ -267,6 +298,14 @@ add_action('admin_enqueue_scripts', function ($hook) {
         'themeStrings' => Translator::grouped(),
         'menuItems'    => snel_translations_get_menu_items(),
         'menuEditUrl'  => admin_url('nav-menus.php'),
+    ));
+
+    // Also expose translate AJAX config so TranslationGrid can call the AI translate endpoint.
+    wp_localize_script('snel-translations-admin', 'snelTranslate', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce'   => wp_create_nonce('snel_translate_nonce'),
+        'langs'   => snel_get_supported_langs(),
+        'default' => snel_get_default_lang(),
     ));
 });
 
