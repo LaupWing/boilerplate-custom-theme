@@ -10,6 +10,20 @@
 ## Block Development
 - When creating content blocks (blocks that display page content like text, headings, articles), always add `data-seo-content` to the outer `<section>` tag in `render.php`. This tells Snel SEO which parts of the page contain real content for AI-powered SEO generation. Layout blocks (topbar, navbar, footer) should NOT have this attribute.
 
+## Naming Convention
+
+All Snelstack themes follow this rule:
+
+- **Text domain:** Always `'snel'` — used in `__()`, `esc_html__()`, etc.
+- **Function prefix:** `snel_` — for all shared helpers (translations, language, contact, etc.)
+- **CSS class prefix:** `snel-` — for all shared component classes
+- **JS globals:** `snelTranslate`, `snelSearch`, etc.
+- **Theme hooks only:** Use the theme name for WordPress hooks that are theme-specific. E.g. `droneconsultancy_setup()`, `antiquewarehouse_scripts()`. These are the `add_action`/`add_filter` callbacks in `functions.php` for setup, scripts, block registration.
+- **Block prefix:** `snel/` — all Gutenberg blocks use the `snel` namespace in `block.json`
+- **Option names:** `snel_` prefix for WP options (e.g. `snel_theme_translations`)
+
+**Why:** This keeps the shared Snelstack system (translations, SEO, settings) portable across all projects. Only the theme-specific hooks use the project name.
+
 ## Project Overview
 - Boilerplate WordPress theme for starting new client projects.
 - Base framework with multilingual system, SEO, Tailwind CSS, and custom Gutenberg blocks.
