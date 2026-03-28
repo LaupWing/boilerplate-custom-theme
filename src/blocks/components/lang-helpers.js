@@ -1,90 +1,22 @@
 /**
  * Shared language helpers for multilingual block attributes.
  *
- * getLang(val, lang)          — read a language value from a multilingual object
- * setLang(val, lang, text)    — return a new object with the language value updated
- * translateTexts(texts, lang) — call the snel translate AJAX endpoint
- * translateBlockAttributes()  — translate block attributes by key
+ * getLang(val, lang)  — read a language value from a multilingual object
+ * setLang(val, lang, text) — return a new object with the language value updated
+ * translateTexts(texts, targetLang) — call the AW translate AJAX endpoint
  */
 
-/**
- * Read a language value from a multilingual object.
- *
- * @param {object|string} val  Either {nl: '...', en: '...'} or a plain string.
- * @param {string}        lang Language code (e.g., 'en').
- * @returns {string}
- */
 export function getLang(val, lang) {
-	if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-		return val[lang] || '';
-	}
-	const defaultLang = window.snelTranslate?.default || 'nl';
-	return typeof val === 'string' ? (lang === defaultLang ? val : '') : '';
+	if (typeof val === 'object' && val !== null && !Array.isArray(val)) return val[lang] || '';
+	return typeof val === 'string' ? (lang === 'nl' ? val : '') : '';
 }
 
-/**
- * Return a new multilingual object with one language value updated.
- * If val is a plain string, it initializes a proper multilingual object first.
- *
- * @param {object|string} val  Current value.
- * @param {string}        lang Language code to update.
- * @param {string}        text New text for that language.
- * @returns {object}
- */
 export function setLang(val, lang, text) {
-	const langs = window.snelTranslate?.langs || ['nl', 'en'];
-
-	let obj;
-	if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-		obj = { ...val };
-	} else {
-		// Initialize empty object for all supported languages
-		obj = {};
-		langs.forEach((l) => {
-			obj[l] = '';
-		});
-		// If val was a plain string, assign it to the default language
-		if (typeof val === 'string') {
-			const defaultLang = window.snelTranslate?.default || 'nl';
-			obj[defaultLang] = val;
-		}
-	}
-
+	const obj = typeof val === 'object' && val !== null && !Array.isArray(val)
+		? { ...val }
+		: { nl: typeof val === 'string' ? val : '', en: '' };
 	obj[lang] = text;
 	return obj;
-}
-
-/**
- * Translate an array of strings to the target language via AJAX.
- *
- * @param {string[]} texts      Array of source strings (default language).
- * @param {string}   targetLang Target language code (e.g., 'en').
- * @returns {Promise<string[]>} Array of translated strings (same order).
- */
-export async function translateTexts(texts, targetLang) {
-	if (!texts.length) return [];
-
-	const defaultLang = window.snelTranslate?.default || 'nl';
-
-	const formData = new FormData();
-	formData.append('action', 'snel_translate');
-	formData.append('nonce', window.snelTranslate?.nonce || '');
-	formData.append('source', defaultLang);
-	formData.append('target', targetLang);
-	texts.forEach((t) => formData.append('texts[]', t));
-
-	const res = await fetch(window.snelTranslate?.ajaxUrl || '/wp-admin/admin-ajax.php', {
-		method: 'POST',
-		credentials: 'same-origin',
-		body: formData,
-	});
-	const data = await res.json();
-
-	if (!data.success || !data.data.translations) {
-		throw new Error(data.data || 'Translation failed');
-	}
-
-	return data.data.translations;
 }
 
 /**
@@ -123,4 +55,51 @@ export async function translateBlockAttributes(attrKeys, targetLang, clientId, s
 	});
 
 	setAttributes(updates);
+}
+
+/**
+ * Translate an array of NL strings to the target language via AJAX.
+ *
+ * @param {string[]} texts     Array of source (NL) strings.
+ * @param {string}   targetLang  'en' or 'de'.
+ * @returns {Promise<string[]>} Array of translated strings (same order).
+ */
+export async function translateTexts(texts, targetLang) {
+	console.log(`[translateTexts] Called. targetLang=${targetLang}, texts count=${texts.length}`);
+	console.log('[translateTexts] Input texts:', texts);
+	if (!texts.length) {
+		console.log('[translateTexts] No texts, returning empty array');
+		return [];
+	}
+
+	const nonce = window.snelTranslate?.nonce || '';
+	const ajaxUrl = window.snelTranslate?.ajaxUrl || '/wp-admin/admin-ajax.php';
+	console.log(`[translateTexts] nonce=${nonce ? 'present' : 'MISSING'}, ajaxUrl=${ajaxUrl}`);
+
+	const formData = new FormData();
+	formData.append('action', 'snel_translate');
+	formData.append('nonce', nonce);
+	formData.append('source', 'nl');
+	formData.append('target', targetLang);
+	texts.forEach((t) => formData.append('texts[]', t));
+
+	console.log('[translateTexts] Sending fetch request...');
+	const res = await fetch(ajaxUrl, {
+		method: 'POST',
+		credentials: 'same-origin',
+		body: formData,
+	});
+	console.log(`[translateTexts] Fetch response status: ${res.status}`);
+
+	const data = await res.json();
+	console.log('[translateTexts] Response data:', data);
+
+	if (!data.success || !data.data.translations) {
+		console.error('[translateTexts] FAILED:', data.data || 'No translations in response');
+		throw new Error(data.data || 'Translation failed');
+	}
+
+	console.log(`[translateTexts] Success! Got ${data.data.translations.length} translations`);
+	console.log('[translateTexts] Translations:', data.data.translations);
+	return data.data.translations;
 }

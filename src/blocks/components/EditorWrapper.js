@@ -4,20 +4,18 @@
  * Provides:
  * - blockProps on the outer div
  * - Editor notice badge with block label
- * - Language toggle (reads from snelTranslate.langs)
+ * - Language toggle (NL / EN / DE / FR / ES / IT)
  * - "Generate Translation" button with animated per-language progress
  */
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { SelectControl } from '@wordpress/components';
+import '../../editor.css';
 
-// Build language list from snelTranslate global (set by translate.php)
-const LANGS = (window.snelTranslate?.langs || ['nl', 'en']).map((code) => ({
-	code,
-	label: code.toUpperCase(),
-}));
-
-const DEFAULT_LANG = window.snelTranslate?.default || 'nl';
+const LANGS = [
+	{ code: 'nl', label: 'NL' },
+	{ code: 'en', label: 'EN' },
+];
 
 const MAX_WIDTH_CLASSES = {
 	narrow: 'max-w-3xl mx-auto',
@@ -25,7 +23,7 @@ const MAX_WIDTH_CLASSES = {
 };
 
 export default function EditorWrapper({ blockProps, label, subtitle, onTranslate, maxWidth, children }) {
-	const [currentLang, setCurrentLang] = useState(DEFAULT_LANG);
+	const [currentLang, setCurrentLang] = useState('nl');
 	const [isTranslating, setIsTranslating] = useState(false);
 	const [buttonState, setButtonState] = useState(null);
 	const [animStyle, setAnimStyle] = useState({});
@@ -54,8 +52,8 @@ export default function EditorWrapper({ blockProps, label, subtitle, onTranslate
 		setIsTranslating(true);
 
 		try {
-			if (currentLang === DEFAULT_LANG) {
-				const langs = LANGS.filter(l => l.code !== DEFAULT_LANG);
+			if (currentLang === 'nl') {
+				const langs = LANGS.filter(l => l.code !== 'nl');
 				for (const { code, label: langLabel } of langs) {
 					await animateButtonText(`Translating ${langLabel}...`, 'translating');
 					await onTranslate(code);
@@ -101,14 +99,31 @@ export default function EditorWrapper({ blockProps, label, subtitle, onTranslate
 
 				<span className="w-px h-4 bg-gray-300 inline-block" />
 
-				{/* Language select */}
-				<SelectControl
-					value={currentLang}
-					options={LANGS.map(({ code, label: langLabel }) => ({ label: langLabel, value: code }))}
-					onChange={setCurrentLang}
-					__nextHasNoMarginBottom
-					style={{ minWidth: '70px', height: '30px', minHeight: 'unset' }}
-				/>
+				{/* Language toggle — buttons for 2 langs, dropdown for 3+ */}
+				{ LANGS.length <= 2 ? (
+					LANGS.map(({ code, label: langLabel }) => (
+						<button
+							key={code}
+							type="button"
+							onClick={() => setCurrentLang(code)}
+							className={`px-2 py-1 rounded text-xs font-bold cursor-pointer transition-colors ${
+								currentLang === code
+									? 'bg-gray-800 text-white'
+									: 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+							}`}
+						>
+							{langLabel}
+						</button>
+					))
+				) : (
+					<SelectControl
+						value={currentLang}
+						options={LANGS.map(({ code, label: langLabel }) => ({ label: langLabel, value: code }))}
+						onChange={setCurrentLang}
+						__nextHasNoMarginBottom
+						style={{ minWidth: '70px', height: '30px', minHeight: 'unset' }}
+					/>
+				) }
 
 				{/* Translate button */}
 				{onTranslate && (
@@ -132,7 +147,7 @@ export default function EditorWrapper({ blockProps, label, subtitle, onTranslate
 								</span>
 							) : (
 								<span>
-									{currentLang === DEFAULT_LANG
+									{currentLang === 'nl'
 										? `✦ ${__('Translate All', 'snel')}`
 										: `✦ ${__('Translate', 'snel')}`
 									}
