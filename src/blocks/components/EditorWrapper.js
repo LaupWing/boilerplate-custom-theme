@@ -87,7 +87,7 @@ export default function EditorWrapper({ blockProps, label, subtitle, onTranslate
 	) : content;
 
 	return (
-		<div {...blockProps} className={`${blockProps.className || ''} border-2 border-dashed border-border-light !px-0`}>
+		<div {...blockProps} className={`${blockProps.className || ''} border-2 border-dashed border-gray-300 !px-0`}>
 			{inner}
 
 			{/* Editor Badge — top right */}
