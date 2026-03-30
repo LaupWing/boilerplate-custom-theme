@@ -24,6 +24,13 @@ All Snelstack themes follow this rule:
 
 **Why:** This keeps the shared Snelstack system (translations, SEO, settings) portable across all projects. Only the theme-specific hooks use the project name.
 
+## Snel SEO Plugin Integration
+When the Snel SEO plugin is installed, the theme must provide two filter hooks in `inc/translations/language.php` to connect the language system:
+- `snel_seo_languages` — returns available languages from the theme's config
+- `snel_seo_current_language` — returns `LocaleManager::current()`
+
+See the bottom of `inc/translations/language.php` for the reference implementation.
+
 ## Project Overview
 - Boilerplate WordPress theme for starting new client projects.
 - Base framework with multilingual system, SEO, Tailwind CSS, and custom Gutenberg blocks.
