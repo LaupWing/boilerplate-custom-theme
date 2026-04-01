@@ -303,6 +303,9 @@ add_action('init', function () {
 // Load AI translation AJAX handler.
 require_once get_template_directory() . '/inc/translations/admin/translate.php';
 
+// Auto-slugify: translate slugs on post publish when API key is set.
+require_once get_template_directory() . '/inc/translations/auto-slug.php';
+
 // ─── Snel SEO Integration ─────────────────────────────────────────────────
 
 /**

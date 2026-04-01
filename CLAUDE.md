@@ -31,6 +31,40 @@ When the Snel SEO plugin is installed, the theme must provide two filter hooks i
 
 See the bottom of `inc/translations/language.php` for the reference implementation.
 
+## Auto Slug Translation
+When a post/page is published and the `_slug_{lang}` meta fields are empty, the system automatically translates the title via OpenAI and saves a slugified version for each non-default language.
+
+**How it works** (`inc/translations/auto-slug.php`):
+1. Fires on `save_post` (priority 20) for published, public post types
+2. Checks if `_slug_{lang}` is empty for each non-default language
+3. If empty AND an OpenAI API key is configured (via Snelstack Settings), translates the post title
+4. Slugifies the translation: lowercase, strip accents, replace non-alphanumeric with hyphens
+5. Saves to `_slug_{lang}` post meta
+
+**If no API key:** Does nothing — the Router falls back to the original WP slug.
+
+**Manual override:** Users can always edit slugs manually in the Snel Stack editor sidebar (Slugs panel) or in the Snel Translations admin page (Pages tab). Manual edits are never overwritten — auto-slug only fills empty fields.
+
+## Slug Management (Two Places)
+1. **Editor sidebar** (Snel Stack > Slugs panel) — edit slugs while editing a page, with AI translate button
+2. **Translations admin** (Snel Translations > Pages tab) — overview of all page slugs, editable inline with translate button
+
+## Key Translation Files
+| File | Purpose |
+|------|---------|
+| `inc/translations/language.php` | Core: routing, helpers (snel__(), snel_attr(), snel_url()), SEO integration |
+| `inc/translations/auto-slug.php` | Auto-translate slugs on publish |
+| `inc/translations/admin/translate.php` | OpenAI AJAX endpoint for AI translations |
+| `inc/translations/admin/admin-translations.php` | Admin page: React app, REST endpoints, settings |
+| `inc/translations/core/LocaleManager.php` | Language config, detection, current language |
+| `inc/translations/core/Router.php` | URL rewrite rules, slug resolution |
+| `inc/translations/core/Translator.php` | Theme string translations, multilingual values |
+| `inc/translations/urls/UrlGenerator.php` | Language-aware URL building |
+| `inc/translations/seo/SeoManager.php` | hreflang, canonical, html lang attribute |
+| `inc/translations/config/languages.php` | Supported languages (edit per project) |
+| `inc/translations/config/slugs-cpt.php` | CPT archive slug translations (edit per project) |
+| `inc/translations/translations.php` | Default theme string translations (edit per project) |
+
 ## Project Overview
 - Boilerplate WordPress theme for starting new client projects.
 - Base framework with multilingual system, SEO, Tailwind CSS, and custom Gutenberg blocks.
