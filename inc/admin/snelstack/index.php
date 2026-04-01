@@ -5,7 +5,7 @@
  * Provides shared configuration for all Snelstack plugins.
  * API keys and AI model settings live here.
  *
- * @package Snel
+ * @package AntiqueWarehouse
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -95,7 +95,7 @@ add_action( 'admin_footer', function () {
             var isActive = li && (li.classList.contains("wp-has-current-submenu") || li.classList.contains("current"));
             var ring = isActive ? \'<span class="snel-gradient-ring"></span>\' : "";
             var activeClass = isActive ? " is-active" : "";
-            var slug = li.className.match(/toplevel_page_([\\w-]+)/);
+            var slug = li.className.match(/toplevel_page_([\w-]+)/);
             var svg = slug ? (snelIcons[slug[1]] || snelIcons["snelstack"]) : snelIcons["snelstack"];
             el.innerHTML = \'<span class="snel-menu-icon\' + activeClass + \'">\' + ring + svg + \'</span>\';
         });
@@ -133,26 +133,8 @@ add_action( 'admin_init', function () {
     ) );
 } );
 
-/**
- * Get the OpenAI API key from the unified Snelstack settings.
- * Falls back to legacy constants/options for backwards compatibility.
- */
-function snelstack_get_openai_key() {
-    $key = get_option( 'snelstack_openai_key', '' );
-    if ( $key ) return $key;
-
-    if ( defined( 'SNEL_SEO_OPENAI_KEY' ) && constant( 'SNEL_SEO_OPENAI_KEY' ) ) {
-        return constant( 'SNEL_SEO_OPENAI_KEY' );
-    }
-    if ( defined( 'SNEL_OPENAI_API_KEY' ) && constant( 'SNEL_OPENAI_API_KEY' ) ) {
-        return constant( 'SNEL_OPENAI_API_KEY' );
-    }
-
-    $legacy = get_option( 'snel_openai_api_key', '' );
-    if ( $legacy ) return $legacy;
-
-    return '';
-}
+// snelstack_get_openai_key() is defined in functions.php (outside is_admin)
+// so REST endpoints can access it. No duplicate declaration here.
 
 /**
  * Get the OpenAI model from Snelstack settings.
@@ -161,6 +143,7 @@ function snelstack_get_openai_model() {
     $model = get_option( 'snelstack_openai_model', '' );
     if ( $model ) return $model;
 
+    // Fallback to legacy option
     return get_option( 'snel_openai_model', 'gpt-4o-mini' );
 }
 
@@ -181,6 +164,7 @@ function snelstack_render_settings() {
             <?php settings_fields( 'snelstack_settings' ); ?>
 
             <table class="form-table">
+                <!-- API Key -->
                 <tr>
                     <th scope="row">
                         <label for="snelstack_openai_key">
@@ -216,6 +200,7 @@ function snelstack_render_settings() {
                     </td>
                 </tr>
 
+                <!-- Model -->
                 <tr>
                     <th scope="row">
                         <label for="snelstack_openai_model">

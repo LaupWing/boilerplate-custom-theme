@@ -11,6 +11,17 @@ if (! defined('ABSPATH')) {
 }
 
 
+// OpenAI key helper — must be available for REST endpoints (not just admin).
+if (! function_exists('snelstack_get_openai_key')) {
+    function snelstack_get_openai_key()
+    {
+        $key = get_option('snelstack_openai_key', '');
+        if ($key) return $key;
+        if (defined('SNEL_OPENAI_API_KEY') && constant('SNEL_OPENAI_API_KEY')) return constant('SNEL_OPENAI_API_KEY');
+        return get_option('snel_openai_api_key', '');
+    }
+}
+
 // Translation system
 require get_template_directory() . '/inc/translations/language.php';
 
