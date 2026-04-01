@@ -45,12 +45,17 @@ function snel_media_folders_enqueue( $hook ) {
 
 	$asset = require $asset_file;
 
-	wp_enqueue_style(
-		'snel-media-folders',
-		get_template_directory_uri() . '/build/admin/media-folders/index.css',
-		[],
-		$asset['version']
-	);
+	// Only load Tailwind CSS on pages that use the media folders UI.
+	// Loading it globally breaks WP default admin list tables.
+	$css_pages = array( 'upload.php', 'media-new.php', 'post.php', 'post-new.php' );
+	if ( in_array( $hook, $css_pages, true ) || wp_script_is( 'media-editor' ) ) {
+		wp_enqueue_style(
+			'snel-media-folders',
+			get_template_directory_uri() . '/build/admin/media-folders/index.css',
+			[],
+			$asset['version']
+		);
+	}
 
 	wp_enqueue_script( 'jquery-ui-draggable' );
 	wp_enqueue_script( 'jquery-ui-droppable' );
