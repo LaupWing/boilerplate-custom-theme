@@ -281,9 +281,24 @@ function snel_cpt_field($post_id, $key)
 require_once get_template_directory() . '/inc/translations/seo/SeoManager.php';
 SeoManager::register();
 
-// Load and register admin meta box — SEO & translations fields on post editor.
-require_once get_template_directory() . '/inc/translations/admin/AdminMetaBox.php';
-AdminMetaBox::register();
+// Register slug meta fields for REST API (used by Snel Stack editor sidebar).
+add_action('init', function () {
+    $langs = LocaleManager::supported();
+    $default = LocaleManager::default();
+    $post_types = get_post_types(['public' => true]);
+
+    foreach ($post_types as $pt) {
+        foreach ($langs as $lang) {
+            if ($lang === $default) continue;
+            register_post_meta($pt, '_slug_' . $lang, [
+                'show_in_rest'  => true,
+                'single'        => true,
+                'type'          => 'string',
+                'auth_callback' => function () { return current_user_can('edit_posts'); },
+            ]);
+        }
+    }
+});
 
 // Load AI translation AJAX handler.
 require_once get_template_directory() . '/inc/translations/admin/translate.php';

@@ -9,7 +9,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { PluginSidebar } from '@wordpress/editor';
 import { useState } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
-import { PanelBody, TextareaControl, Button, SelectControl, Modal } from '@wordpress/components';
+import { PanelBody, TextareaControl, TextControl, Button, SelectControl, Modal } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { translateTexts } from '../../blocks/components/lang-helpers';
 import '../../blocks/components/content-extractor';
@@ -285,11 +285,117 @@ function TranslationsTab() {
 	);
 }
 
+// ─── Slugs Tab ─────────────────────────────────────────────────────────────
+
+function SlugsTab() {
+	const defaultLang = window.snelTranslate?.default || 'nl';
+	const langs = (window.snelTranslate?.langs || ['nl', 'en']).filter((l) => l !== defaultLang);
+	const [isTranslating, setIsTranslating] = useState(false);
+	const [slugStatus, setSlugStatus] = useState('');
+
+	const postSlug = useSelect((select) => {
+		const post = select('core/editor').getCurrentPost();
+		return post?.slug || '';
+	}, []);
+	const postTitle = useSelect((select) => select('core/editor').getEditedPostAttribute('title') || '', []);
+	const meta = useSelect((select) => select('core/editor').getEditedPostAttribute('meta') || {}, []);
+	const { editPost } = useDispatch('core/editor');
+
+	const allFilled = langs.every((lang) => meta[`_slug_${lang}`]);
+
+	const handleTranslateSlugs = async () => {
+		if (!postTitle) return;
+		setIsTranslating(true);
+		setSlugStatus('');
+
+		try {
+			// Translate the page title to each language, then slugify
+			const texts = langs.map(() => postTitle);
+			const targetLangs = langs;
+			const newMeta = { ...meta };
+
+			for (let i = 0; i < targetLangs.length; i++) {
+				const lang = targetLangs[i];
+				const translated = await translateTexts([postTitle], lang);
+				if (translated && translated[0]) {
+					// Slugify: lowercase, replace spaces/special chars with hyphens
+					const slug = translated[0]
+						.toLowerCase()
+						.normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
+						.replace(/[^a-z0-9]+/g, '-')
+						.replace(/^-+|-+$/g, '');
+					newMeta[`_slug_${lang}`] = slug;
+				}
+			}
+
+			editPost({ meta: newMeta });
+			setSlugStatus(`${langs.length} ${__('slugs translated!', 'snel')}`);
+		} catch (err) {
+			setSlugStatus(`${__('Error:', 'snel')} ${err.message}`);
+		}
+
+		setIsTranslating(false);
+	};
+
+	return (
+		<div>
+			<div style={{ marginBottom: 12, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: 13 }}>
+				<span style={{ fontSize: 11, fontWeight: 600, color: '#999', textTransform: 'uppercase' }}>
+					{defaultLang.toUpperCase()} ({__('original', 'snel')})
+				</span>
+				<div style={{ marginTop: 2, color: '#333' }}>/{postSlug}/</div>
+			</div>
+
+			{langs.map((lang) => {
+				const metaKey = `_slug_${lang}`;
+				const currentSlug = meta[metaKey] || '';
+
+				return (
+					<TextControl
+						key={lang}
+						label={`${__('Slug', 'snel')} ${lang.toUpperCase()}`}
+						value={currentSlug}
+						onChange={(val) => editPost({ meta: { ...meta, [metaKey]: val } })}
+						placeholder={postSlug}
+						__nextHasNoMarginBottom
+						style={{ marginBottom: 8 }}
+					/>
+				);
+			})}
+
+			<Button
+				variant="secondary"
+				onClick={handleTranslateSlugs}
+				isBusy={isTranslating}
+				disabled={isTranslating || !postTitle}
+				style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+			>
+				{isTranslating
+					? __('Translating...', 'snel')
+					: allFilled
+						? `✦ ${__('Retranslate All', 'snel')}`
+						: `✦ ${__('Translate Slugs', 'snel')}`}
+			</Button>
+
+			{slugStatus && (
+				<p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>{slugStatus}</p>
+			)}
+
+			<p style={{ fontSize: 11, color: '#999', marginTop: 8 }}>
+				{__('Leave empty to use the original slug.', 'snel')}
+			</p>
+		</div>
+	);
+}
+
 // ─── Sidebar Content ────────────────────────────────────────────────────────
 
 function SidebarContent() {
 	return (
 		<>
+			<PanelBody title={__('Slugs', 'snel')} initialOpen={false} icon="admin-links">
+				<SlugsTab />
+			</PanelBody>
 			<PanelBody title={__('Translations', 'snel')} initialOpen icon="translation">
 				<TranslationsTab />
 			</PanelBody>
