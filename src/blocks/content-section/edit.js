@@ -3,7 +3,7 @@ import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-
 import { PanelBody, SelectControl, TextareaControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { serialize } from '@wordpress/blocks';
-import EditorWrapper from '../components/EditorWrapper';
+import TranslatableWrapper from '../components/TranslatableWrapper';
 import { translateTexts } from '../components/lang-helpers';
 
 const ALLOWED_BLOCKS = [
@@ -99,7 +99,7 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 				))}
 			</InspectorControls>
 
-			<EditorWrapper
+			<TranslatableWrapper
 				blockProps={blockProps}
 				label="Content Section"
 				onTranslate={handleTranslate}
@@ -131,7 +131,7 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 						</div>
 					</section>
 				)}
-			</EditorWrapper>
+			</TranslatableWrapper>
 		</>
 	);
 }

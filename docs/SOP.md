@@ -63,7 +63,7 @@ theme-root/
 │   ├── editor.css                     ← Block editor styles (if needed)
 │   ├── blocks/                        ← Custom Gutenberg blocks (auto-discovered)
 │   │   └── components/                ← Shared block components
-│   │       ├── EditorWrapper.js       ← Language toggle UI (DO NOT EDIT)
+│   │       ├── TranslatableWrapper.js       ← Language toggle UI (DO NOT EDIT)
 │   │       └── lang-helpers.js        ← getLang/setLang/translate (DO NOT EDIT)
 │   ├── admin/                         ← Admin pages (React, auto-discovered)
 │   │   └── seo/index.js              ← SEO admin page
@@ -192,7 +192,7 @@ Any `inc/*/index.php` file is loaded automatically by `functions.php`. To add a 
 | Type | Where it lives | How to add |
 |------|---------------|------------|
 | **Theme strings** | `translations.php` + database | Use `snel__('Dutch text')` in templates, add translation to file |
-| **Block content** | Block attributes `{nl: '...', en: '...'}` | Use EditorWrapper in block, toggle language, type or auto-translate |
+| **Block content** | Block attributes `{nl: '...', en: '...'}` | Use TranslatableWrapper in block, toggle language, type or auto-translate |
 | **Page URL slugs** | Post meta `_slug_en` | Fill in the meta box on each page in wp-admin |
 
 ### Fallback behavior
@@ -253,7 +253,7 @@ Multilingual attributes use `"type": "object"` to store `{nl: '...', en: '...'}`
 ```jsx
 import { useBlockProps } from '@wordpress/block-editor';
 import { RichText } from '@wordpress/block-editor';
-import EditorWrapper from '../components/EditorWrapper';
+import TranslatableWrapper from '../components/TranslatableWrapper';
 import { getLang, setLang, translateTexts } from '../components/lang-helpers';
 
 export default function Edit({ attributes, setAttributes }) {
@@ -276,7 +276,7 @@ export default function Edit({ attributes, setAttributes }) {
     };
 
     return (
-        <EditorWrapper
+        <TranslatableWrapper
             blockProps={blockProps}
             label="My Block"
             onTranslate={handleTranslate}
@@ -297,7 +297,7 @@ export default function Edit({ attributes, setAttributes }) {
                     />
                 </div>
             )}
-        </EditorWrapper>
+        </TranslatableWrapper>
     );
 }
 ```

@@ -1,5 +1,5 @@
 /**
- * EditorWrapper — Shared wrapper for all custom Gutenberg blocks.
+ * TranslatableWrapper — Shared wrapper for all custom Gutenberg blocks.
  *
  * Provides:
  * - blockProps on the outer div
@@ -22,7 +22,7 @@ const MAX_WIDTH_CLASSES = {
 	wide: 'max-w-5xl mx-auto',
 };
 
-export default function EditorWrapper({ blockProps, label, subtitle, onTranslate, maxWidth, children }) {
+export default function TranslatableWrapper({ blockProps, label, subtitle, onTranslate, maxWidth, children }) {
 	const [currentLang, setCurrentLang] = useState('nl');
 	const [isTranslating, setIsTranslating] = useState(false);
 	const [buttonState, setButtonState] = useState(null);
@@ -70,7 +70,7 @@ export default function EditorWrapper({ blockProps, label, subtitle, onTranslate
 				await new Promise(r => setTimeout(r, 1000));
 			}
 		} catch (err) {
-			console.error('[EditorWrapper] Translation error:', err);
+			console.error('[TranslatableWrapper] Translation error:', err);
 		} finally {
 			setButtonState(null);
 			setAnimStyle({});
