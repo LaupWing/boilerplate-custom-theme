@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss/utilities" important;
+@import "tailwindcss/theme" important;
+
+/* No preflight — this CSS loads on all admin pages.
+   Preflight resets would break WP default admin styles. */
 
 /* Make #wpbody a flex row — sidebar + content side by side */
 #wpbody.snel-media-layout {
