@@ -160,11 +160,11 @@ function snel_editor_assets()
 add_action('enqueue_block_editor_assets', 'snel_editor_assets');
 
 /**
- * Enqueue translation sidebar plugin in the block editor.
+ * Enqueue Snel Stack editor sidebar plugin.
  */
 function snel_enqueue_editor_plugins()
 {
-    $asset_file = get_template_directory() . '/build/editor/translator/index.asset.php';
+    $asset_file = get_template_directory() . '/build/editor/snelstack/index.asset.php';
     if (! file_exists($asset_file)) {
         return;
     }
@@ -172,12 +172,19 @@ function snel_enqueue_editor_plugins()
     $asset = require $asset_file;
 
     wp_enqueue_script(
-        'snel-translation-sidebar',
-        get_template_directory_uri() . '/build/editor/translator/index.js',
+        'snel-editor-snelstack',
+        get_template_directory_uri() . '/build/editor/snelstack/index.js',
         $asset['dependencies'],
         $asset['version'],
         true
     );
+
+    wp_localize_script('snel-editor-snelstack', 'snelTranslate', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce'   => wp_create_nonce('snel_translate_nonce'),
+        'langs'   => snel_get_supported_langs(),
+        'default' => snel_get_default_lang(),
+    ));
 }
 add_action('enqueue_block_editor_assets', 'snel_enqueue_editor_plugins');
 
