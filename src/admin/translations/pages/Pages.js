@@ -1,7 +1,8 @@
 import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { ExternalLink, Loader2, ChevronDown, ChevronRight, Check, AlertCircle, Search } from 'lucide-react';
+import { ExternalLink, Loader2, ChevronDown, ChevronRight, Check, AlertCircle, Search, Sparkles } from 'lucide-react';
 import Highlight from '../components/Highlight';
+import { translateTexts } from '../../../blocks/components/lang-helpers';
 
 export default function Pages( { initialSearch = '', initialPageId = null } ) {
     const languages = window.snelTranslations?.languages || [];
@@ -83,6 +84,115 @@ export default function Pages( { initialSearch = '', initialPageId = null } ) {
     );
 }
 
+function SlugRow( { page, nonDefaultLangs, defaultLang } ) {
+    const [ slugs, setSlugs ] = useState( page.slugs || {} );
+    const [ saving, setSaving ] = useState( false );
+    const [ saved, setSaved ] = useState( false );
+    const [ translating, setTranslating ] = useState( false );
+
+    const allFilled = nonDefaultLangs.every( ( l ) => slugs[ l.code ] );
+
+    const handleChange = ( lang, value ) => {
+        setSlugs( ( prev ) => ( { ...prev, [ lang ]: value } ) );
+        setSaved( false );
+    };
+
+    const handleSave = async () => {
+        setSaving( true );
+        try {
+            await fetch( `${ window.snelTranslations.restUrl }/page-slugs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': window.snelTranslations.nonce,
+                },
+                body: JSON.stringify( { pageId: page.id, slugs } ),
+            } );
+            setSaved( true );
+            setTimeout( () => setSaved( false ), 2000 );
+        } catch {
+            // silent
+        }
+        setSaving( false );
+    };
+
+    const handleTranslate = async () => {
+        if ( ! page.title ) return;
+        setTranslating( true );
+        try {
+            const newSlugs = { ...slugs };
+            for ( const l of nonDefaultLangs ) {
+                const translated = await translateTexts( [ page.title ], l.code );
+                if ( translated && translated[ 0 ] ) {
+                    newSlugs[ l.code ] = translated[ 0 ]
+                        .toLowerCase()
+                        .normalize( 'NFD' ).replace( /[\u0300-\u036f]/g, '' )
+                        .replace( /[^a-z0-9]+/g, '-' )
+                        .replace( /^-+|-+$/g, '' );
+                }
+            }
+            setSlugs( newSlugs );
+            setSaved( false );
+        } catch {
+            // silent
+        }
+        setTranslating( false );
+    };
+
+    return (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-b border-gray-100">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    { __( 'URL Slugs', 'snel' ) }
+                </span>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={ handleTranslate }
+                        disabled={ translating || ! page.title }
+                        className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-colors bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+                    >
+                        <Sparkles size={ 12 } />
+                        { translating ? __( 'Translating...', 'snel' ) : allFilled ? __( 'Retranslate', 'snel' ) : __( 'Translate Slugs', 'snel' ) }
+                    </button>
+                    <button
+                        onClick={ handleSave }
+                        disabled={ saving }
+                        className={ `px-3 py-1 text-xs font-medium rounded transition-colors ${
+                            saved
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }` }
+                    >
+                        { saving ? __( 'Saving...', 'snel' ) : saved ? '✓ ' + __( 'Saved!', 'snel' ) : __( 'Save', 'snel' ) }
+                    </button>
+                </div>
+            </div>
+            {/* Column headers */ }
+            <div className="grid px-4 py-2 bg-gray-50/30 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-gray-100" style={ { gridTemplateColumns: `120px 1fr ${ nonDefaultLangs.map( () => '1fr' ).join( ' ' ) }` } }>
+                <div>{ __( 'Field', 'snel' ) }</div>
+                <div>{ defaultLang.toUpperCase() } ({ __( 'source', 'snel' ) })</div>
+                { nonDefaultLangs.map( ( l ) => (
+                    <div key={ l.code }>{ l.label }</div>
+                ) ) }
+            </div>
+            <div className="grid px-4 py-2.5 gap-3 items-center" style={ { gridTemplateColumns: `120px 1fr ${ nonDefaultLangs.map( () => '1fr' ).join( ' ' ) }` } }>
+                <div className="text-xs font-mono text-gray-400">slug</div>
+                <div className="text-sm text-gray-500">/{ page.slug }/</div>
+                { nonDefaultLangs.map( ( l ) => (
+                    <input
+                        key={ l.code }
+                        type="text"
+                        value={ slugs[ l.code ] || '' }
+                        onChange={ ( e ) => handleChange( l.code, e.target.value ) }
+                        placeholder={ page.slug }
+                        className={ `text-sm border rounded px-2 py-1 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_0_1px_#3b82f6] ${ slugs[ l.code ] ? 'border-gray-200' : 'border-amber-300 bg-amber-50/50' }` }
+                    />
+                ) ) }
+            </div>
+        </div>
+    );
+}
+
 function PageDetail( { page, nonDefaultLangs, defaultLang, initialSearch = '' } ) {
     const [ collapsed, setCollapsed ] = useState( {} );
     const [ searchQuery, setSearchQuery ] = useState( initialSearch );
@@ -103,14 +213,20 @@ function PageDetail( { page, nonDefaultLangs, defaultLang, initialSearch = '' } 
 
     if ( page.blocks.length === 0 ) {
         return (
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-400 py-8">
-                { __( 'No translatable blocks found on this page.', 'snel' ) }
+            <div>
+                <SlugRow page={ page } nonDefaultLangs={ nonDefaultLangs } defaultLang={ defaultLang } />
+                <div className="bg-white border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-400 py-8">
+                    { __( 'No translatable blocks found on this page.', 'snel' ) }
+                </div>
             </div>
         );
     }
 
     return (
         <div>
+            {/* Slug row */ }
+            <SlugRow page={ page } nonDefaultLangs={ nonDefaultLangs } defaultLang={ defaultLang } />
+
             {/* Page header */ }
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">

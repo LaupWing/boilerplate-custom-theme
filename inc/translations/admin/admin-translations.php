@@ -19,13 +19,13 @@ if (! defined('ABSPATH')) {
 function snel_translations_admin_menu()
 {
     add_menu_page(
-        __('Translations', 'snel'),
-        __('Translations', 'snel'),
+        __('Snel Translations', 'snel'),
+        __('Snel Translations', 'snel'),
         'manage_options',
         'snel-translations',
         'snel_translations_page_render',
-        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2I4MmY2Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2MzYWVkIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJNNi41IDEzYS43LjcgMCAwIDEtLjU1LTEuMTRsNi45My03LjE0YS4zNS4zNSAwIDAgMSAuNi4zMkwxMi4xNCA5LjJhLjcuNyAwIDAgMCAuNjYuOTVoNC45YS43LjcgMCAwIDEgLjU1IDEuMTRsLTYuOTMgNy4xNGEuMzUuMzUgMCAwIDEtLjYtLjMybDEuMzQtNC4yMUEuNy43IDAgMCAwIDExLjQgMTN6IiBmaWxsPSIjZmZmIi8+PC9zdmc+',
-        28
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2I4MmY2Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2MzYWVkIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJtNSA4IDYgNk00IDE0bDYtNiAyLTNNMiA1aDEyTTcgMnYzbTEwIDE1LTUtMTAtNSAxME0xNCAxOGg2IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+',
+        30
     );
 
     add_submenu_page(
@@ -119,9 +119,17 @@ add_action('rest_api_init', function () {
                     }
                 }
 
+                // Collect slugs per language.
+                $slugs = array();
+                foreach ($non_default as $lang) {
+                    $slugs[$lang] = get_post_meta($page->ID, '_slug_' . $lang, true) ?: '';
+                }
+
                 $result[] = array(
                     'id'      => $page->ID,
                     'title'   => $page->post_title,
+                    'slug'    => $page->post_name,
+                    'slugs'   => $slugs,
                     'editUrl' => get_edit_post_link($page->ID, 'raw'),
                     'blocks'  => $translatable,
                     'total'   => $total,
@@ -130,6 +138,32 @@ add_action('rest_api_init', function () {
             }
 
             return rest_ensure_response($result);
+        },
+        'permission_callback' => function () { return current_user_can('manage_options'); },
+    ));
+
+    // Save page slugs.
+    register_rest_route('snel-translations/v1', '/page-slugs', array(
+        'methods'             => 'POST',
+        'callback'            => function (WP_REST_Request $request) {
+            $data = $request->get_json_params();
+            $page_id = intval($data['pageId'] ?? 0);
+            $slugs   = $data['slugs'] ?? array();
+
+            if (! $page_id || ! get_post($page_id)) {
+                return new WP_Error('invalid_page', 'Page not found.', array('status' => 404));
+            }
+
+            foreach ($slugs as $lang => $slug) {
+                $slug = sanitize_title($slug);
+                if ($slug) {
+                    update_post_meta($page_id, '_slug_' . sanitize_key($lang), $slug);
+                } else {
+                    delete_post_meta($page_id, '_slug_' . sanitize_key($lang));
+                }
+            }
+
+            return rest_ensure_response(array('success' => true));
         },
         'permission_callback' => function () { return current_user_can('manage_options'); },
     ));
