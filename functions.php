@@ -122,6 +122,18 @@ add_action('wp_enqueue_scripts', 'snel_scripts');
 
 
 /**
+ * Register custom block category.
+ */
+function snel_block_categories( $categories ) {
+    array_unshift( $categories, array(
+        'slug'  => 'snel',
+        'title' => __( 'Snel', 'snel' ),
+    ));
+    return $categories;
+}
+add_filter( 'block_categories_all', 'snel_block_categories' );
+
+/**
  * Register custom Gutenberg blocks.
  * Scans build/blocks/ for block.json files and registers them.
  */

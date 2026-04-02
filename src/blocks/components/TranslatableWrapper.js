@@ -14,7 +14,7 @@ import { __ } from '@wordpress/i18n';
 import { SelectControl } from '@wordpress/components';
 import { BG_EDITOR_STYLES } from './BgColorControl';
 import InspectorOptions from './InspectorOptions';
-import '../../editor.css';
+import '../../shared/editor-theme.css';
 
 const LANGS = [
 	{ code: 'nl', label: 'NL' },

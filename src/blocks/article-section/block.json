@@ -1,13 +1,13 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "snel/content-section",
+	"name": "snel/article-section",
 	"version": "1.0.0",
-	"title": "Content Section",
+	"title": "Article Section",
 	"category": "snel",
-	"icon": "welcome-write-blog",
-	"description": "Flexible content section with InnerBlocks and chunk-based multilingual support. Custom blocks render independently.",
-	"keywords": ["content", "section", "rich", "innerblocks"],
+	"icon": "text-page",
+	"description": "Structured section with tagline, heading, image, and body text. Each field is individually translatable.",
+	"keywords": ["article", "about", "text", "section"],
 	"textdomain": "snel",
 	"editorScript": "file:./index.js",
 	"render": "file:./render.php",
@@ -23,11 +23,6 @@
 			"type": "string",
 			"default": "white"
 		},
-		"maxWidth": {
-			"type": "string",
-			"default": "narrow",
-			"enum": ["narrow", "wide"]
-		},
 		"tagline": {
 			"type": "object",
 			"default": { "nl": "", "en": "" }
@@ -36,9 +31,17 @@
 			"type": "object",
 			"default": { "nl": "", "en": "" }
 		},
-		"contentTranslations": {
+		"imageUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"imageId": {
+			"type": "number",
+			"default": 0
+		},
+		"content": {
 			"type": "object",
-			"default": {}
+			"default": { "nl": "", "en": "" }
 		},
 		"verticalPadding": {
 			"type": "boolean",
