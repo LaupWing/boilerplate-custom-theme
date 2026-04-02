@@ -84,7 +84,9 @@ function snel_setup()
 
     // Add support for editor styles
     add_theme_support('editor-styles');
-    add_editor_style('build/editor.css');
+    if ( file_exists( get_template_directory() . '/build/index.css' ) ) {
+        add_editor_style( 'build/index.css' );
+    }
 }
 add_action('after_setup_theme', 'snel_setup');
 
