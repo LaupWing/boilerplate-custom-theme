@@ -235,12 +235,27 @@ class Router
                 return $query_vars;
             }
 
-            // Check blog posts too
+            // Check blog posts by translated slug
             $post = self::findPostBySlug($segments[0], $lang);
             if ($post) {
                 unset($query_vars['pagename']);
                 $query_vars['name'] = $post->post_name;
                 $query_vars['post_type'] = 'post';
+                return $query_vars;
+            }
+
+            // Fallback: try the original slug directly (post or page without translation)
+            $fallback_post = get_page_by_path($segments[0], OBJECT, 'post');
+            if ($fallback_post) {
+                unset($query_vars['pagename']);
+                $query_vars['name'] = $fallback_post->post_name;
+                $query_vars['post_type'] = 'post';
+                return $query_vars;
+            }
+
+            $fallback_page = get_page_by_path($segments[0], OBJECT, 'page');
+            if ($fallback_page) {
+                $query_vars['pagename'] = $fallback_page->post_name;
                 return $query_vars;
             }
 
