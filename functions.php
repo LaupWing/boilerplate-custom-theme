@@ -87,6 +87,8 @@ function snel_setup()
     if ( file_exists( get_template_directory() . '/build/index.css' ) ) {
         add_editor_style( 'build/index.css' );
     }
+    add_editor_style( 'src/editor.css' );
+    add_editor_style( 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' );
 }
 add_action('after_setup_theme', 'snel_setup');
 

@@ -1,19 +1,19 @@
 /**
  * Content Section — Editor Component
  *
- * Translatable tagline + heading, then InnerBlocks for free-form content.
+ * Free-form InnerBlocks content section.
  * Translations stored as arrays of chunks per language in contentTranslations.
  * Custom blocks (snel/*) always render — only text blocks get translated.
  */
 import { __ } from '@wordpress/i18n';
-import { useBlockProps, InnerBlocks, InspectorControls, RichText } from '@wordpress/block-editor';
+import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { useSelect, select } from '@wordpress/data';
 import { serialize } from '@wordpress/blocks';
 import { RawHTML } from '@wordpress/element';
 import TranslatableWrapper from '../components/TranslatableWrapper';
 import BgColorControl, { getBgClass, BG_EDITOR_STYLES } from '../components/BgColorControl';
-import { getLang, setLang, translateTexts } from '../components/lang-helpers';
+import { translateTexts } from '../components/lang-helpers';
 
 const MAX_WIDTH_OPTIONS = [
 	{ label: 'Narrow (prose)', value: 'narrow' },
@@ -52,7 +52,7 @@ function isSkippedBlock(block) {
 }
 
 export default function Edit({ attributes, setAttributes, clientId }) {
-	const { backgroundColor, maxWidth, tagline, heading, contentTranslations, verticalPadding } = attributes;
+	const { backgroundColor, maxWidth, contentTranslations, verticalPadding } = attributes;
 
 	const maxWidthClass = maxWidth === 'wide' ? 'max-w-5xl' : 'max-w-3xl';
 	const paddingClass = verticalPadding ? 'py-16 md:py-24' : 'py-0';
@@ -69,17 +69,9 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 
 	const handleTranslate = async (targetLang) => {
 		const texts = [];
-		const map = [];
-
-		const t = getLang(tagline, 'nl');
-		if (t) { texts.push(t); map.push('tagline'); }
-
-		const h = getLang(heading, 'nl');
-		if (h) { texts.push(h); map.push('heading'); }
-
 		const textBlocks = innerBlocks.filter((b) => !isSkippedBlock(b));
 
-		textBlocks.forEach((block, i) => {
+		textBlocks.forEach((block) => {
 			const html = serialize([block])
 				.replace(/<!--.*?-->/gs, '')
 				.replace(/\n+/g, ' ')
@@ -87,7 +79,6 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 				.trim();
 			if (html) {
 				texts.push(html);
-				map.push(`chunk_${i}`);
 			}
 		});
 
@@ -104,25 +95,10 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 		if (!tr || tr.length === 0) return;
 
 		const freshAttrs = select('core/block-editor').getBlockAttributes(clientId);
-
-		const updates = {};
-		const chunks = [];
-
-		tr.forEach((translated, i) => {
-			if (map[i] === 'tagline') {
-				updates.tagline = setLang(freshAttrs.tagline, targetLang, translated);
-			} else if (map[i] === 'heading') {
-				updates.heading = setLang(freshAttrs.heading, targetLang, translated);
-			} else if (map[i].startsWith('chunk_')) {
-				chunks.push(translated);
-			}
-		});
-
 		const newTranslations = { ...(freshAttrs.contentTranslations || {}) };
-		newTranslations[targetLang] = chunks;
-		updates.contentTranslations = newTranslations;
+		newTranslations[targetLang] = tr;
 
-		setAttributes(updates);
+		setAttributes({ contentTranslations: newTranslations });
 	};
 
 	const getChunks = (lang) => {
@@ -190,25 +166,6 @@ export default function Edit({ attributes, setAttributes, clientId }) {
 			<TranslatableWrapper blockProps={blockProps} label="Content Section" onTranslate={handleTranslate} fullWidth>
 				{({ currentLang }) => (
 					<div className={`${maxWidthClass} mx-auto`}>
-						<div className="mb-12">
-							<RichText
-								tagName="p"
-								value={getLang(tagline, currentLang)}
-								onChange={(v) => setAttributes({ tagline: setLang(tagline, currentLang, v) })}
-								placeholder={__('Tagline...', 'snel')}
-								className="snel-editable text-sm font-medium tracking-wide text-text-muted uppercase mb-4"
-								allowedFormats={[]}
-							/>
-							<RichText
-								tagName="h2"
-								value={getLang(heading, currentLang)}
-								onChange={(v) => setAttributes({ heading: setLang(heading, currentLang, v) })}
-								placeholder={__('Heading...', 'snel')}
-								className="snel-editable text-3xl md:text-4xl font-bold text-text-primary mb-6"
-								allowedFormats={['core/bold', 'core/italic']}
-							/>
-						</div>
-
 						<div className="prose prose-lg max-w-none">
 							{currentLang === 'nl' ? (
 								<InnerBlocks

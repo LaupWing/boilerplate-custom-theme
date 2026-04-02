@@ -28,14 +28,6 @@
 			"default": "narrow",
 			"enum": ["narrow", "wide"]
 		},
-		"tagline": {
-			"type": "object",
-			"default": { "nl": "", "en": "" }
-		},
-		"heading": {
-			"type": "object",
-			"default": { "nl": "", "en": "" }
-		},
 		"contentTranslations": {
 			"type": "object",
 			"default": {}
