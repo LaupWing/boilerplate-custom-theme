@@ -92,6 +92,13 @@ class Router
                 'top'
             );
 
+            // /en/page/2/ → blog pagination
+            add_rewrite_rule(
+                "^{$lang}/page/([0-9]+)/?$",
+                'index.php?lang=' . $lang . '&paged=$matches[1]',
+                'top'
+            );
+
             // CPT rules from config (e.g., /en/products/, /en/products/my-post/)
             foreach ($cpt_slugs as $dutch_slug => $translations) {
                 if (! empty($translations[$lang])) {
