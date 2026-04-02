@@ -41,9 +41,61 @@ class Router
         add_filter('query_vars', [self::class, 'registerQueryVars']);
         add_action('init', [self::class, 'registerRewriteRules']);
         add_action('after_switch_theme', 'flush_rewrite_rules');
+        add_filter('request', [self::class, 'interceptLanguageUrl'], 1);
         add_filter('request', [self::class, 'fixFrontPage']);
         add_filter('request', [self::class, 'resolveSlug']);
         add_filter('redirect_canonical', [self::class, 'preventCanonicalRedirect']);
+    }
+
+    /**
+     * Intercept language URLs early to prevent attachment rule mismatch.
+     *
+     * WordPress's parse_request() can misinterpret translated slugs as
+     * attachment names when rewrite rules don't match perfectly. This
+     * filter runs at priority 1 to parse the raw REQUEST_URI and set
+     * the correct lang + pagename/paged vars before other filters run.
+     *
+     * @param array $query_vars WordPress query vars.
+     * @return array
+     */
+    public static function interceptLanguageUrl(array $query_vars): array
+    {
+        $default = LocaleManager::default();
+        $langs   = LocaleManager::supported();
+        $non_default = array_diff($langs, [$default]);
+
+        if (empty($non_default)) {
+            return $query_vars;
+        }
+
+        $request = trim($_SERVER['REQUEST_URI'] ?? '', '/');
+        $request = strtok($request, '?');
+
+        $pattern = '#^(' . implode('|', $non_default) . ')(/(.*))?$#';
+        if (!preg_match($pattern, $request, $matches)) {
+            return $query_vars;
+        }
+
+        $lang = $matches[1];
+        $path = isset($matches[3]) ? trim($matches[3], '/') : '';
+
+        if (!empty($query_vars['lang']) && $query_vars['lang'] === $lang) {
+            return $query_vars;
+        }
+
+        $new_vars = ['lang' => $lang];
+
+        if (empty($path)) {
+            return $new_vars;
+        }
+
+        if (preg_match('#^page/(\d+)$#', $path, $page_match)) {
+            $new_vars['paged'] = (int) $page_match[1];
+            return $new_vars;
+        }
+
+        $new_vars['pagename'] = $path;
+        return $new_vars;
     }
 
     /**
