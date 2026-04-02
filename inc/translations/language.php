@@ -296,6 +296,12 @@ add_action('init', function () {
                 'type'          => 'string',
                 'auth_callback' => function () { return current_user_can('edit_posts'); },
             ]);
+            register_post_meta($pt, '_title_' . $lang, [
+                'show_in_rest'  => true,
+                'single'        => true,
+                'type'          => 'string',
+                'auth_callback' => function () { return current_user_can('edit_posts'); },
+            ]);
         }
     }
 });

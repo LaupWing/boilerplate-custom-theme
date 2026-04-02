@@ -88,5 +88,11 @@ function snel_auto_slugify($post_id, $post)
         if (! empty($slug)) {
             update_post_meta($post_id, '_slug_' . $lang, $slug);
         }
+
+        // Also save the translated title if not already set.
+        $existing_title = get_post_meta($post_id, '_title_' . $lang, true);
+        if (empty($existing_title) && ! empty($translated)) {
+            update_post_meta($post_id, '_title_' . $lang, $translated);
+        }
     }
 }

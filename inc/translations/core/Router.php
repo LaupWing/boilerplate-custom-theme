@@ -45,6 +45,15 @@ class Router
         add_filter('request', [self::class, 'fixFrontPage']);
         add_filter('request', [self::class, 'resolveSlug']);
         add_filter('redirect_canonical', [self::class, 'preventCanonicalRedirect']);
+
+        // Force flush once after deploy if rules are stale.
+        $rules_version = 'snel_rewrite_v3';
+        if ( get_option( $rules_version ) !== '1' ) {
+            add_action( 'init', function() use ( $rules_version ) {
+                flush_rewrite_rules();
+                update_option( $rules_version, '1' );
+            }, 99 );
+        }
     }
 
     /**

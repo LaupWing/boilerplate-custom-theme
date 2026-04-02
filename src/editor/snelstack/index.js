@@ -294,34 +294,34 @@ function SlugsTab() {
 	const [slugStatus, setSlugStatus] = useState('');
 
 	const postSlug = useSelect((select) => {
-		const post = select('core/editor').getCurrentPost();
-		return post?.slug || '';
+		return select('core/editor').getEditedPostAttribute('slug') || '';
 	}, []);
 	const postTitle = useSelect((select) => select('core/editor').getEditedPostAttribute('title') || '', []);
 	const meta = useSelect((select) => select('core/editor').getEditedPostAttribute('meta') || {}, []);
 	const { editPost } = useDispatch('core/editor');
 
-	const allFilled = langs.every((lang) => meta[`_slug_${lang}`]);
+	const allSlugsFilled = langs.every((lang) => meta[`_slug_${lang}`]);
+	const allTitlesFilled = langs.every((lang) => meta[`_title_${lang}`]);
+	const allFilled = allSlugsFilled && allTitlesFilled;
 
-	const handleTranslateSlugs = async () => {
+	const handleTranslateAll = async () => {
 		if (!postTitle) return;
 		setIsTranslating(true);
 		setSlugStatus('');
 
 		try {
-			// Translate the page title to each language, then slugify
-			const texts = langs.map(() => postTitle);
-			const targetLangs = langs;
 			const newMeta = { ...meta };
 
-			for (let i = 0; i < targetLangs.length; i++) {
-				const lang = targetLangs[i];
+			for (const lang of langs) {
 				const translated = await translateTexts([postTitle], lang);
 				if (translated && translated[0]) {
-					// Slugify: lowercase, replace spaces/special chars with hyphens
+					// Save translated title
+					newMeta[`_title_${lang}`] = translated[0];
+
+					// Slugify for slug
 					const slug = translated[0]
 						.toLowerCase()
-						.normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
+						.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 						.replace(/[^a-z0-9]+/g, '-')
 						.replace(/^-+|-+$/g, '');
 					newMeta[`_slug_${lang}`] = slug;
@@ -329,7 +329,7 @@ function SlugsTab() {
 			}
 
 			editPost({ meta: newMeta });
-			setSlugStatus(`${langs.length} ${__('slugs translated!', 'snel')}`);
+			setSlugStatus(`${langs.length} ${__('titles & slugs translated!', 'snel')}`);
 		} catch (err) {
 			setSlugStatus(`${__('Error:', 'snel')} ${err.message}`);
 		}
@@ -339,33 +339,42 @@ function SlugsTab() {
 
 	return (
 		<div>
-			<div style={{ marginBottom: 12, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: 13 }}>
+			{/* Original title + slug */}
+			<div style={{ marginBottom: 16, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: 13 }}>
 				<span style={{ fontSize: 11, fontWeight: 600, color: '#999', textTransform: 'uppercase' }}>
 					{defaultLang.toUpperCase()} ({__('original', 'snel')})
 				</span>
-				<div style={{ marginTop: 2, color: '#333' }}>/{postSlug}/</div>
+				<div style={{ marginTop: 4, color: '#333', fontWeight: 500 }}>{postTitle}</div>
+				<div style={{ marginTop: 2, color: '#666', fontSize: 12 }}>/{postSlug}/</div>
 			</div>
 
-			{langs.map((lang) => {
-				const metaKey = `_slug_${lang}`;
-				const currentSlug = meta[metaKey] || '';
-
-				return (
+			{/* Translated titles + slugs per language */}
+			{langs.map((lang) => (
+				<div key={lang} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #eee' }}>
+					<span style={{ fontSize: 11, fontWeight: 600, color: '#3b82f6', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+						{lang.toUpperCase()}
+					</span>
 					<TextControl
-						key={lang}
-						label={`${__('Slug', 'snel')} ${lang.toUpperCase()}`}
-						value={currentSlug}
-						onChange={(val) => editPost({ meta: { ...meta, [metaKey]: val } })}
-						placeholder={postSlug}
+						label={__('Title', 'snel')}
+						value={meta[`_title_${lang}`] || ''}
+						onChange={(val) => editPost({ meta: { ...meta, [`_title_${lang}`]: val } })}
+						placeholder={postTitle}
 						__nextHasNoMarginBottom
 						style={{ marginBottom: 8 }}
 					/>
-				);
-			})}
+					<TextControl
+						label={__('Slug', 'snel')}
+						value={meta[`_slug_${lang}`] || ''}
+						onChange={(val) => editPost({ meta: { ...meta, [`_slug_${lang}`]: val } })}
+						placeholder={postSlug}
+						__nextHasNoMarginBottom
+					/>
+				</div>
+			))}
 
 			<Button
 				variant="secondary"
-				onClick={handleTranslateSlugs}
+				onClick={handleTranslateAll}
 				isBusy={isTranslating}
 				disabled={isTranslating || !postTitle}
 				style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
@@ -374,7 +383,7 @@ function SlugsTab() {
 					? __('Translating...', 'snel')
 					: allFilled
 						? `✦ ${__('Retranslate All', 'snel')}`
-						: `✦ ${__('Translate Slugs', 'snel')}`}
+						: `✦ ${__('Translate Titles & Slugs', 'snel')}`}
 			</Button>
 
 			{slugStatus && (
@@ -382,7 +391,7 @@ function SlugsTab() {
 			)}
 
 			<p style={{ fontSize: 11, color: '#999', marginTop: 8 }}>
-				{__('Leave empty to use the original slug.', 'snel')}
+				{__('Leave empty to use the original.', 'snel')}
 			</p>
 		</div>
 	);
@@ -393,7 +402,7 @@ function SlugsTab() {
 function SidebarContent() {
 	return (
 		<>
-			<PanelBody title={__('Slugs', 'snel')} initialOpen={false} icon="admin-links">
+			<PanelBody title={__('Titles & Slugs', 'snel')} initialOpen={false} icon="admin-links">
 				<SlugsTab />
 			</PanelBody>
 			<PanelBody title={__('Translations', 'snel')} initialOpen icon="translation">
