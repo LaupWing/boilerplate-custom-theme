@@ -1,12 +1,12 @@
 <?php
 /**
- * Auto-slugify — Automatically translate slugs on post publish.
+ * Auto-title — Automatically translate titles on post publish.
  *
- * When a post/page is published and _slug_{lang} meta fields are empty,
- * this translates the post title via OpenAI and saves slugified versions.
+ * When a post/page is published and _title_{lang} meta fields are empty,
+ * this translates the post title via OpenAI and saves them.
  *
  * Requires an OpenAI API key configured via Snelstack Settings.
- * If no API key is set, this does nothing (original slug is used as fallback).
+ * If no API key is set, this does nothing.
  *
  * @package Snel
  */
@@ -15,9 +15,9 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-add_action('save_post', 'snel_auto_slugify', 20, 2);
+add_action('save_post', 'snel_auto_translate_title', 20, 2);
 
-function snel_auto_slugify($post_id, $post)
+function snel_auto_translate_title($post_id, $post)
 {
     // Skip autosaves, revisions, and non-published posts.
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
@@ -46,9 +46,9 @@ function snel_auto_slugify($post_id, $post)
     foreach ($langs as $lang) {
         if ($lang === $default) continue;
 
-        // Skip if slug already set.
-        $existing = get_post_meta($post_id, '_slug_' . $lang, true);
-        if (! empty($existing)) continue;
+        // Skip if title already set.
+        $existing_title = get_post_meta($post_id, '_title_' . $lang, true);
+        if (! empty($existing_title)) continue;
 
         // Translate title via OpenAI.
         $source_name = $lang_names[$default] ?? $default;
@@ -77,21 +77,7 @@ function snel_auto_slugify($post_id, $post)
         $body       = json_decode(wp_remote_retrieve_body($response), true);
         $translated = trim($body['choices'][0]['message']['content'] ?? '');
 
-        if (empty($translated)) continue;
-
-        // Slugify: lowercase, strip accents, replace non-alphanumeric with hyphens.
-        $slug = strtolower($translated);
-        $slug = remove_accents($slug);
-        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
-        $slug = trim($slug, '-');
-
-        if (! empty($slug)) {
-            update_post_meta($post_id, '_slug_' . $lang, $slug);
-        }
-
-        // Also save the translated title if not already set.
-        $existing_title = get_post_meta($post_id, '_title_' . $lang, true);
-        if (empty($existing_title) && ! empty($translated)) {
+        if (! empty($translated)) {
             update_post_meta($post_id, '_title_' . $lang, $translated);
         }
     }

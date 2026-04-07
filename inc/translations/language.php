@@ -74,16 +74,6 @@ require_once get_template_directory() . '/inc/translations/urls/UrlGenerator.php
 require_once get_template_directory() . '/inc/translations/core/Router.php';
 Router::register();
 
-/**
- * Load and cache the CPT slug translations config.
- *
- * @return array
- */
-function snel_get_cpt_slugs_config()
-{
-    return UrlGenerator::cptSlugsConfig();
-}
-
 // ---------------------------------------------------------------------------
 // URL Helpers
 // ---------------------------------------------------------------------------
@@ -97,51 +87,6 @@ function snel_get_cpt_slugs_config()
 function snel_url($url)
 {
     return UrlGenerator::url($url);
-}
-
-/**
- * Build a translated page URL for the current language.
- *
- * @param string $default_slug The default language (Dutch) page slug.
- * @return string
- */
-function snel_page_url($default_slug)
-{
-    return UrlGenerator::pageUrl($default_slug);
-}
-
-/**
- * Build a translated URL for a nav menu item.
- *
- * @param WP_Post $item Nav menu item object.
- * @return string Translated URL.
- */
-function snel_nav_item_url($item)
-{
-    return UrlGenerator::navItemUrl($item);
-}
-
-/**
- * Build a translated CPT archive URL for the current language.
- *
- * @param string $cpt_slug The default-language CPT slug.
- * @return string
- */
-function snel_cpt_url($cpt_slug)
-{
-    return UrlGenerator::cptUrl($cpt_slug);
-}
-
-/**
- * Build a translated CPT single post URL for the current language.
- *
- * @param int|WP_Post $post     Post ID or object.
- * @param string      $cpt_slug The default-language CPT archive slug.
- * @return string
- */
-function snel_cpt_single_url($post, $cpt_slug)
-{
-    return UrlGenerator::cptSingleUrl($post, $cpt_slug);
 }
 
 /**
@@ -281,7 +226,7 @@ function snel_cpt_field($post_id, $key)
 require_once get_template_directory() . '/inc/translations/seo/SeoManager.php';
 SeoManager::register();
 
-// Register slug meta fields for REST API (used by Snel Stack editor sidebar).
+// Register title meta fields for REST API (used by Snel Stack editor sidebar).
 add_action('init', function () {
     $langs = LocaleManager::supported();
     $default = LocaleManager::default();
@@ -290,12 +235,6 @@ add_action('init', function () {
     foreach ($post_types as $pt) {
         foreach ($langs as $lang) {
             if ($lang === $default) continue;
-            register_post_meta($pt, '_slug_' . $lang, [
-                'show_in_rest'  => true,
-                'single'        => true,
-                'type'          => 'string',
-                'auth_callback' => function () { return current_user_can('edit_posts'); },
-            ]);
             register_post_meta($pt, '_title_' . $lang, [
                 'show_in_rest'  => true,
                 'single'        => true,

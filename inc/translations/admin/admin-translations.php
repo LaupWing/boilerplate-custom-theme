@@ -119,17 +119,10 @@ add_action('rest_api_init', function () {
                     }
                 }
 
-                // Collect slugs per language.
-                $slugs = array();
-                foreach ($non_default as $lang) {
-                    $slugs[$lang] = get_post_meta($page->ID, '_slug_' . $lang, true) ?: '';
-                }
-
                 $result[] = array(
                     'id'      => $page->ID,
                     'title'   => $page->post_title,
                     'slug'    => $page->post_name,
-                    'slugs'   => $slugs,
                     'editUrl' => get_edit_post_link($page->ID, 'raw'),
                     'blocks'  => $translatable,
                     'total'   => $total,
@@ -142,31 +135,6 @@ add_action('rest_api_init', function () {
         'permission_callback' => function () { return current_user_can('manage_options'); },
     ));
 
-    // Save page slugs.
-    register_rest_route('snel-translations/v1', '/page-slugs', array(
-        'methods'             => 'POST',
-        'callback'            => function (WP_REST_Request $request) {
-            $data = $request->get_json_params();
-            $page_id = intval($data['pageId'] ?? 0);
-            $slugs   = $data['slugs'] ?? array();
-
-            if (! $page_id || ! get_post($page_id)) {
-                return new WP_Error('invalid_page', 'Page not found.', array('status' => 404));
-            }
-
-            foreach ($slugs as $lang => $slug) {
-                $slug = sanitize_title($slug);
-                if ($slug) {
-                    update_post_meta($page_id, '_slug_' . sanitize_key($lang), $slug);
-                } else {
-                    delete_post_meta($page_id, '_slug_' . sanitize_key($lang));
-                }
-            }
-
-            return rest_ensure_response(array('success' => true));
-        },
-        'permission_callback' => function () { return current_user_can('manage_options'); },
-    ));
 });
 
 // ─── Block Defaults Helper ───────────────────────────────────────────────────

@@ -3,24 +3,11 @@
 /**
  * Handles language-aware URL routing in WordPress.
  *
- * This is the piece that makes WordPress understand URLs like /en/about-us/.
- * Without this, WordPress only knows about the default Dutch slugs.
+ * Registers rewrite rules for language prefixes (/en/, /de/),
+ * fixes front page loading, and prevents canonical redirects.
  *
- * What it does:
- * 1. Registers 'lang' as a WordPress query variable
- * 2. Creates rewrite rules so /en/... URLs work
- * 3. Resolves translated slugs back to real WordPress slugs
- * 4. Fixes front page loading for non-default languages
- * 5. Prevents WordPress from redirecting translated URLs to Dutch ones
- *
- * How rewrite rules work (simplified):
- *   User visits: /en/about-us/
- *   → WordPress rewrite rule matches: ^en/(.+?)/?$
- *   → Sets query vars: lang=en, pagename=about-us
- *   → resolveSlug() intercepts: looks up _slug_en="about-us" in post meta
- *   → Finds the page with real slug "over-ons"
- *   → Swaps pagename to "over-ons"
- *   → WordPress loads the correct page
+ * URLs use the default (Dutch) slugs with a language prefix:
+ *   /en/over-ons/  (not /en/about-us/)
  *
  * @package Snel
  */
@@ -33,88 +20,27 @@ class Router
 {
     /**
      * Register all WordPress hooks for routing.
-     *
-     * Called once from language.php to wire everything up.
      */
     public static function register(): void
     {
         add_filter('query_vars', [self::class, 'registerQueryVars']);
         add_action('init', [self::class, 'registerRewriteRules']);
         add_action('after_switch_theme', 'flush_rewrite_rules');
-        add_filter('request', [self::class, 'interceptLanguageUrl'], 1);
         add_filter('request', [self::class, 'fixFrontPage']);
-        add_filter('request', [self::class, 'resolveSlug']);
-        add_filter('redirect_canonical', [self::class, 'preventCanonicalRedirect']);
+        add_filter('redirect_canonical', [self::class, 'preventCanonicalRedirect'], 10, 2);
 
         // Force flush once after deploy if rules are stale.
-        $rules_version = 'snel_rewrite_v3';
-        if ( get_option( $rules_version ) !== '1' ) {
-            add_action( 'init', function() use ( $rules_version ) {
+        $rules_version = 'snel_rewrite_v4';
+        if (get_option($rules_version) !== '1') {
+            add_action('init', function () use ($rules_version) {
                 flush_rewrite_rules();
-                update_option( $rules_version, '1' );
-            }, 99 );
+                update_option($rules_version, '1');
+            }, 99);
         }
-    }
-
-    /**
-     * Intercept language URLs early to prevent attachment rule mismatch.
-     *
-     * WordPress's parse_request() can misinterpret translated slugs as
-     * attachment names when rewrite rules don't match perfectly. This
-     * filter runs at priority 1 to parse the raw REQUEST_URI and set
-     * the correct lang + pagename/paged vars before other filters run.
-     *
-     * @param array $query_vars WordPress query vars.
-     * @return array
-     */
-    public static function interceptLanguageUrl(array $query_vars): array
-    {
-        $default = LocaleManager::default();
-        $langs   = LocaleManager::supported();
-        $non_default = array_diff($langs, [$default]);
-
-        if (empty($non_default)) {
-            return $query_vars;
-        }
-
-        $request = trim($_SERVER['REQUEST_URI'] ?? '', '/');
-        $request = strtok($request, '?');
-
-        $pattern = '#^(' . implode('|', $non_default) . ')(/(.*))?$#';
-        if (!preg_match($pattern, $request, $matches)) {
-            return $query_vars;
-        }
-
-        $lang = $matches[1];
-        $path = isset($matches[3]) ? trim($matches[3], '/') : '';
-
-        if (!empty($query_vars['lang']) && $query_vars['lang'] === $lang) {
-            return $query_vars;
-        }
-
-        $new_vars = ['lang' => $lang];
-
-        if (empty($path)) {
-            return $new_vars;
-        }
-
-        if (preg_match('#^page/(\d+)$#', $path, $page_match)) {
-            $new_vars['paged'] = (int) $page_match[1];
-            return $new_vars;
-        }
-
-        $new_vars['pagename'] = $path;
-        return $new_vars;
     }
 
     /**
      * Register 'lang' as a query variable so WordPress recognizes it.
-     *
-     * Without this, get_query_var('lang') would always return empty
-     * even if the rewrite rules set it.
-     *
-     * @param array $vars Existing query vars.
-     * @return array
      */
     public static function registerQueryVars(array $vars): array
     {
@@ -127,12 +53,10 @@ class Router
      *
      * Creates rules so that:
      *   /en/                    → homepage with lang=en
-     *   /en/some-page/          → page with lang=en (catch-all)
-     *   /en/products/           → CPT archive with lang=en (from config)
-     *   /en/products/some-post/ → CPT single with lang=en (from config)
-     *
-     * Rules are registered with 'top' priority so they are checked
-     * before WordPress default rules.
+     *   /en/some-page/          → page with lang=en
+     *   /en/page/2/             → blog pagination with lang=en
+     *   /en/cpt-slug/           → CPT archive with lang=en (from config)
+     *   /en/cpt-slug/some-post/ → CPT single with lang=en (from config)
      */
     public static function registerRewriteRules(): void
     {
@@ -141,7 +65,6 @@ class Router
         $cpt_slugs = UrlGenerator::cptSlugsConfig();
 
         foreach ($langs as $lang) {
-            // Skip default language — it has no URL prefix
             if ($lang === $default) {
                 continue;
             }
@@ -165,21 +88,18 @@ class Router
                 if (! empty($translations[$lang])) {
                     $translated_slug = $translations[$lang];
 
-                    // /en/products/ → CPT archive
                     add_rewrite_rule(
                         "^{$lang}/{$translated_slug}/?$",
                         'index.php?lang=' . $lang . '&post_type=' . $dutch_slug,
                         'top'
                     );
 
-                    // /en/products/my-post/ → CPT single
                     add_rewrite_rule(
                         "^{$lang}/{$translated_slug}/([^/]+)/?$",
                         'index.php?lang=' . $lang . '&post_type=' . $dutch_slug . '&name=$matches[1]',
                         'top'
                     );
 
-                    // /en/products/page/2/ → CPT archive pagination
                     add_rewrite_rule(
                         "^{$lang}/{$translated_slug}/page/([0-9]+)/?$",
                         'index.php?lang=' . $lang . '&post_type=' . $dutch_slug . '&paged=$matches[1]',
@@ -188,35 +108,7 @@ class Router
                 }
             }
 
-            // Explicit rules for each page with a translated slug.
-            // Uses page_id to avoid WP's pagename→attachment fallback.
-            //
-            // WHY: When the catch-all rule sets pagename=translated-slug,
-            // WordPress's parse_request() looks up the page by that slug.
-            // If no page has that actual WP slug (because the real slug is
-            // different, e.g. "about" not "about-us"), WP silently converts
-            // it to attachment=translated-slug → 404.
-            // Using page_id bypasses the slug lookup entirely.
-            $pages_with_slugs = get_posts([
-                'post_type'      => 'page',
-                'post_status'    => 'publish',
-                'posts_per_page' => -1,
-                'meta_key'       => '_slug_' . $lang,
-                'meta_compare'   => 'EXISTS',
-            ]);
-
-            foreach ($pages_with_slugs as $page) {
-                $translated_slug = get_post_meta($page->ID, '_slug_' . $lang, true);
-                if ($translated_slug) {
-                    add_rewrite_rule(
-                        "^{$lang}/{$translated_slug}/?$",
-                        'index.php?lang=' . $lang . '&page_id=' . $page->ID,
-                        'top'
-                    );
-                }
-            }
-
-            // Catch-all for pages without explicit translated slugs
+            // Catch-all for pages
             add_rewrite_rule(
                 "^{$lang}/(.+?)/?$",
                 'index.php?lang=' . $lang . '&pagename=$matches[1]',
@@ -227,128 +119,34 @@ class Router
 
     /**
      * Fix front page loading for non-default languages.
-     *
-     * When visiting /en/ the rewrite sets lang=en but no page is specified.
-     * WordPress doesn't know to show the front page. This filter injects
-     * the front page ID so it loads correctly.
-     *
-     * @param array $query_vars WordPress query vars.
-     * @return array
      */
     public static function fixFrontPage(array $query_vars): array
     {
-        $lang    = $query_vars['lang'] ?? '';
-        $default = LocaleManager::default();
-
-        if ($lang && $lang !== $default) {
-            $has_page = ! empty($query_vars['pagename']) || ! empty($query_vars['page_id']);
-            $has_post = ! empty($query_vars['name']) || ! empty($query_vars['p']) || ! empty($query_vars['post_type']);
-
-            if (! $has_page && ! $has_post) {
-                $front_page_id = get_option('page_on_front');
-
-                if ($front_page_id) {
-                    $query_vars['page_id'] = $front_page_id;
-                }
-            }
-        }
-
-        return $query_vars;
-    }
-
-    /**
-     * Resolve translated page slugs to their actual WordPress page.
-     *
-     * When the catch-all rewrite rule sets pagename=about-us (translated slug),
-     * WordPress doesn't know that page — the real slug is "over-ons".
-     * This filter intercepts the query, looks up the real slug via post meta,
-     * and swaps it in.
-     *
-     * Handles both flat and nested (child) page slugs:
-     *   /en/about-us/       → pagename=about-us    → resolves to "over-ons"
-     *   /en/about-us/team/  → pagename=about-us/team → resolves segment by segment
-     *
-     * @param array $query_vars WordPress query vars.
-     * @return array
-     */
-    public static function resolveSlug(array $query_vars): array
-    {
         $lang = $query_vars['lang'] ?? '';
 
-        // Only for non-default languages
-        if (! $lang || $lang === LocaleManager::default()) {
-            return $query_vars;
-        }
-
-        // Only if a pagename is set (catch-all rule)
-        if (empty($query_vars['pagename'])) {
-            return $query_vars;
-        }
-
-        $requested_path = $query_vars['pagename'];
-        $segments = explode('/', $requested_path);
-
-        // Try the full path first (flat page or blog post, most common case)
-        if (count($segments) === 1) {
-            $page = self::findPageBySlug($segments[0], $lang);
-            if ($page) {
-                $query_vars['pagename'] = $page->post_name;
-                return $query_vars;
-            }
-
-            // Check blog posts by translated slug
-            $post = self::findPostBySlug($segments[0], $lang);
-            if ($post) {
-                unset($query_vars['pagename']);
-                $query_vars['name'] = $post->post_name;
-                $query_vars['post_type'] = 'post';
-                return $query_vars;
-            }
-
-            // Fallback: try the original slug directly (post or page without translation)
-            $fallback_post = get_page_by_path($segments[0], OBJECT, 'post');
-            if ($fallback_post) {
-                unset($query_vars['pagename']);
-                $query_vars['name'] = $fallback_post->post_name;
-                $query_vars['post_type'] = 'post';
-                return $query_vars;
-            }
-
-            $fallback_page = get_page_by_path($segments[0], OBJECT, 'page');
-            if ($fallback_page) {
-                $query_vars['pagename'] = $fallback_page->post_name;
-                return $query_vars;
-            }
-
-            return $query_vars;
-        }
-
-        // Nested path: translate each segment back to the real slug
-        $real_segments = [];
-        foreach ($segments as $segment) {
-            $page = self::findPageBySlug($segment, $lang);
-            if ($page) {
-                $real_segments[] = $page->post_name;
-            } else {
-                $real_segments[] = $segment;
+        if (
+            $lang &&
+            $lang !== LocaleManager::default() &&
+            empty($query_vars['pagename']) &&
+            empty($query_vars['page_id']) &&
+            empty($query_vars['p']) &&
+            empty($query_vars['name']) &&
+            empty($query_vars['post_type']) &&
+            empty($query_vars['s'])
+        ) {
+            $front_page_id = get_option('page_on_front');
+            if ($front_page_id) {
+                $query_vars['page_id'] = $front_page_id;
             }
         }
-
-        $query_vars['pagename'] = implode('/', $real_segments);
 
         return $query_vars;
     }
 
     /**
      * Prevent WordPress from redirecting translated URLs to the canonical (Dutch) URL.
-     *
-     * Without this, visiting /en/about-us/ would redirect to /over-ons/
-     * because WordPress thinks the "real" URL is the Dutch one.
-     *
-     * @param string|false $redirect_url The URL WordPress wants to redirect to.
-     * @return string|false
      */
-    public static function preventCanonicalRedirect($redirect_url)
+    public static function preventCanonicalRedirect($redirect_url, $requested_url)
     {
         $lang = get_query_var('lang', '');
 
@@ -357,49 +155,5 @@ class Router
         }
 
         return $redirect_url;
-    }
-
-    /**
-     * Find a page by its translated slug.
-     *
-     * Looks in post meta for _slug_{lang} = $slug.
-     *
-     * @param string $slug The translated slug.
-     * @param string $lang The language code.
-     * @return WP_Post|null
-     */
-    private static function findPageBySlug(string $slug, string $lang): ?\WP_Post
-    {
-        $pages = get_posts([
-            'post_type'      => 'page',
-            'post_status'    => 'publish',
-            'meta_key'       => '_slug_' . $lang,
-            'meta_value'     => $slug,
-            'posts_per_page' => 1,
-        ]);
-
-        return ! empty($pages) ? $pages[0] : null;
-    }
-
-    /**
-     * Find a blog post by its translated slug.
-     *
-     * Looks in post meta for _slug_{lang} = $slug.
-     *
-     * @param string $slug The translated slug.
-     * @param string $lang The language code.
-     * @return WP_Post|null
-     */
-    private static function findPostBySlug(string $slug, string $lang): ?\WP_Post
-    {
-        $posts = get_posts([
-            'post_type'      => 'post',
-            'post_status'    => 'publish',
-            'meta_key'       => '_slug_' . $lang,
-            'meta_value'     => $slug,
-            'posts_per_page' => 1,
-        ]);
-
-        return ! empty($posts) ? $posts[0] : null;
     }
 }

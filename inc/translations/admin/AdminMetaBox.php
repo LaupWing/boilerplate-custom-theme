@@ -4,12 +4,10 @@
  * SEO & Translations meta box on the post/page editor.
  *
  * Adds a meta box where admins can enter per-language:
- * - URL slug (e.g., "about-us" for English version of "over-ons")
  * - Title tag (for SEO)
  * - Meta description (for SEO)
  *
  * Data is stored in post meta:
- *   _slug_{lang}      — translated URL slug
  *   _title_{lang}     — translated document title
  *   _meta_desc_{lang} — translated meta description
  *
@@ -74,7 +72,6 @@ class AdminMetaBox
         echo '<table class="widefat" style="border:0;box-shadow:none;">';
         echo '<thead><tr>';
         echo '<th style="width:50px;">Lang</th>';
-        echo '<th>URL Slug</th>';
         echo '<th>Title Tag</th>';
         echo '<th>Meta Description</th>';
         echo '</tr></thead><tbody>';
@@ -85,19 +82,11 @@ class AdminMetaBox
             }
 
             $label     = $config[$lang]['label'] ?? strtoupper($lang);
-            $slug_val  = get_post_meta($post->ID, '_slug_' . $lang, true);
             $title_val = get_post_meta($post->ID, '_title_' . $lang, true);
             $desc_val  = get_post_meta($post->ID, '_meta_desc_' . $lang, true);
 
             echo '<tr>';
             echo '<td><strong>' . esc_html($label) . '</strong></td>';
-
-            echo '<td>';
-            echo '<input type="text" name="snel_slug_' . esc_attr($lang) . '" ';
-            echo 'value="' . esc_attr($slug_val) . '" ';
-            echo 'placeholder="' . esc_attr($post->post_name) . '" ';
-            echo 'style="width:100%;" />';
-            echo '</td>';
 
             echo '<td>';
             echo '<input type="text" name="snel_title_' . esc_attr($lang) . '" ';
@@ -145,16 +134,6 @@ class AdminMetaBox
         foreach ($langs as $lang) {
             if ($lang === $default) {
                 continue;
-            }
-
-            $slug_key = 'snel_slug_' . $lang;
-            if (isset($_POST[$slug_key])) {
-                $slug = sanitize_title($_POST[$slug_key]);
-                if ($slug) {
-                    update_post_meta($post_id, '_slug_' . $lang, $slug);
-                } else {
-                    delete_post_meta($post_id, '_slug_' . $lang);
-                }
             }
 
             $title_key = 'snel_title_' . $lang;
