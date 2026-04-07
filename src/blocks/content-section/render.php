@@ -45,6 +45,8 @@ $chunks       = ! empty( $translations[ $lang ] ) ? $translations[ $lang ] : nul
 			<?php
 			if ( $lang === $default || ! $chunks ) {
 				echo $content;
+			} elseif ( is_string( $chunks ) ) {
+				echo wp_kses_post( $chunks );
 			} elseif ( is_array( $chunks ) && ! empty( $block->inner_blocks ) ) {
 				$text_index = 0;
 				foreach ( $block->inner_blocks as $inner_block ) {
