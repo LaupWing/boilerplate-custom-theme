@@ -55,6 +55,7 @@ add_action( 'admin_head', function () {
         }
         #adminmenu .toplevel_page_snel-seo .wp-menu-image,
         #adminmenu .toplevel_page_snel-translations .wp-menu-image,
+        #adminmenu .toplevel_page_snel-newsletter .wp-menu-image,
         #adminmenu .toplevel_page_snelstack .wp-menu-image {
             display: flex !important;
             align-items: center;
@@ -64,12 +65,14 @@ add_action( 'admin_head', function () {
         }
         #adminmenu .toplevel_page_snel-seo,
         #adminmenu .toplevel_page_snel-translations,
+        #adminmenu .toplevel_page_snel-newsletter,
         #adminmenu .toplevel_page_snelstack {
             position: relative;
             z-index: 1;
         }
         #adminmenu .toplevel_page_snel-seo .wp-menu-image br,
         #adminmenu .toplevel_page_snel-translations .wp-menu-image br,
+        #adminmenu .toplevel_page_snel-newsletter .wp-menu-image br,
         #adminmenu .toplevel_page_snelstack .wp-menu-image br {
             display: none;
         }
@@ -84,11 +87,13 @@ add_action( 'admin_footer', function () {
         var snelIcons = {
             "snel-seo": \'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>\',
             "snel-translations": \'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>\',
+            "snel-newsletter": \'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>\',
             "snelstack": \'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" fill="#fff"/></svg>\'
         };
         document.querySelectorAll(
             "#adminmenu .toplevel_page_snel-seo .wp-menu-image," +
             "#adminmenu .toplevel_page_snel-translations .wp-menu-image," +
+            "#adminmenu .toplevel_page_snel-newsletter .wp-menu-image," +
             "#adminmenu .toplevel_page_snelstack .wp-menu-image"
         ).forEach(function(el) {
             var li = el.closest("li");
