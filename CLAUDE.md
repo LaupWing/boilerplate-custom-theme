@@ -12,17 +12,17 @@
 
 ## Naming Convention
 
-All Snelstack themes follow this rule:
+**IMPORTANT: Always use the `snel` prefix for ALL new projects. Never rename it per project.**
 
 - **Text domain:** Always `'snel'` — used in `__()`, `esc_html__()`, etc.
 - **Function prefix:** `snel_` — for all shared helpers (translations, language, contact, etc.)
 - **CSS class prefix:** `snel-` — for all shared component classes
 - **JS globals:** `snelTranslate`, `snelSearch`, etc.
-- **Theme hooks only:** Use the theme name for WordPress hooks that are theme-specific. E.g. `droneconsultancy_setup()`, `antiquewarehouse_scripts()`. These are the `add_action`/`add_filter` callbacks in `functions.php` for setup, scripts, block registration.
+- **Theme hooks only:** Use the theme name for WordPress hooks that are theme-specific. E.g. `locnguyen_setup()`, `antiquewarehouse_scripts()`. These are the `add_action`/`add_filter` callbacks in `functions.php` for setup, scripts, block registration.
 - **Block prefix:** `snel/` — all Gutenberg blocks use the `snel` namespace in `block.json`
 - **Option names:** `snel_` prefix for WP options (e.g. `snel_theme_translations`)
 
-**Why:** This keeps the shared Snelstack system (translations, SEO, settings) portable across all projects. Only the theme-specific hooks use the project name.
+**Why:** This keeps the shared Snelstack system (translations, SEO, settings) portable across all projects. Only the theme-specific hooks use the project name. Do NOT rename `snel` to a project-specific prefix — it breaks portability.
 
 ## Snel SEO Plugin Integration
 When the Snel SEO plugin is installed, the theme must provide two filter hooks in `inc/translations/language.php` to connect the language system:
@@ -31,23 +31,18 @@ When the Snel SEO plugin is installed, the theme must provide two filter hooks i
 
 See the bottom of `inc/translations/language.php` for the reference implementation.
 
-## Auto Slug Translation
-When a post/page is published and the `_slug_{lang}` meta fields are empty, the system automatically translates the title via OpenAI and saves a slugified version for each non-default language.
+## Auto Title Translation
+When a post/page is published and the `_title_{lang}` meta fields are empty, the system automatically translates the title via OpenAI and saves them.
 
 **How it works** (`inc/translations/auto-slug.php`):
 1. Fires on `save_post` (priority 20) for published, public post types
-2. Checks if `_slug_{lang}` is empty for each non-default language
+2. Checks if `_title_{lang}` is empty for each non-default language
 3. If empty AND an OpenAI API key is configured (via Snelstack Settings), translates the post title
-4. Slugifies the translation: lowercase, strip accents, replace non-alphanumeric with hyphens
-5. Saves to `_slug_{lang}` post meta
+4. Saves to `_title_{lang}` post meta
 
-**If no API key:** Does nothing — the Router falls back to the original WP slug.
+**If no API key:** Does nothing — falls back to the original Dutch title.
 
-**Manual override:** Users can always edit slugs manually in the Snel Stack editor sidebar (Slugs panel) or in the Snel Translations admin page (Pages tab). Manual edits are never overwritten — auto-slug only fills empty fields.
-
-## Slug Management (Two Places)
-1. **Editor sidebar** (Snel Stack > Slugs panel) — edit slugs while editing a page, with AI translate button
-2. **Translations admin** (Snel Translations > Pages tab) — overview of all page slugs, editable inline with translate button
+**Manual override:** Users can edit titles in the Snel Stack editor sidebar (Translated Titles panel). Manual edits are never overwritten — auto-translate only fills empty fields.
 
 ## Key Translation Files
 | File | Purpose |
