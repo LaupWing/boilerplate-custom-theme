@@ -1,6 +1,6 @@
 <?php
 /**
- * Auto-title — Automatically translate titles on post publish.
+ * Auto-translate — Automatically translate titles on post publish.
  *
  * When a post/page is published and _title_{lang} meta fields are empty,
  * this translates the post title via OpenAI and saves them.
