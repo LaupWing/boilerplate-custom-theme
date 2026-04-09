@@ -8,6 +8,28 @@
 <body <?php body_class('antialiased'); ?>>
 <?php wp_body_open(); ?>
 
+<?php
+$langs   = snel_get_supported_langs();
+$current = snel_get_lang();
+$config  = snel_get_languages_config();
+
+$lang_full_names = [
+    'nl' => 'Nederlands', 'en' => 'English', 'de' => 'Deutsch',
+    'fr' => 'Français', 'es' => 'Español', 'it' => 'Italiano',
+];
+$lang_flags = [
+    'nl' => '🇳🇱', 'en' => '🇬🇧', 'de' => '🇩🇪',
+    'fr' => '🇫🇷', 'es' => '🇪🇸', 'it' => '🇮🇹',
+];
+
+// Get primary menu items.
+$menu_locations = get_nav_menu_locations();
+$menu_items     = [];
+if (! empty($menu_locations['primary'])) {
+    $menu_items = wp_get_nav_menu_items($menu_locations['primary']) ?: [];
+}
+?>
+
 <header class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
     <div class="container mx-auto px-6 py-4 flex items-center justify-between">
         <a href="<?php echo esc_url(snel_url('/')); ?>" class="text-xl font-bold text-gray-900">
@@ -15,42 +37,21 @@
         </a>
 
         <nav class="flex items-center gap-6">
-            <a href="<?php echo esc_url(snel_url('/')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo snel__('Home'); ?>
-            </a>
-            <a href="<?php echo esc_url(snel_page_url('over-ons')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo snel__('Over Ons'); ?>
-            </a>
-            <a href="<?php echo esc_url(snel_page_url('diensten')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo snel__('Diensten'); ?>
-            </a>
-            <a href="<?php echo esc_url(snel_page_url('contact')); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                <?php echo snel__('Contact'); ?>
-            </a>
+            <?php foreach ($menu_items as $item) :
+                if ((int) $item->menu_item_parent !== 0) continue;
+                $url   = snel_url(wp_parse_url($item->url, PHP_URL_PATH) ?: '/');
+                $title = snel__($item->title);
+            ?>
+                <a href="<?php echo esc_url($url); ?>" class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    <?php echo esc_html($title); ?>
+                </a>
+            <?php endforeach; ?>
+
+            <?php if (empty($menu_items)) : ?>
+                <span class="text-sm text-gray-400">Set up a menu in Appearance > Menus</span>
+            <?php endif; ?>
 
             <!-- Language Switcher -->
-            <?php
-            $langs        = snel_get_supported_langs();
-            $current      = snel_get_lang();
-            $config       = snel_get_languages_config();
-            $current_label = $config[$current]['label'] ?? strtoupper($current);
-
-            $lang_full_names = [
-                'nl' => 'Nederlands',
-                'en' => 'English',
-                'de' => 'Deutsch',
-                'fr' => 'Français',
-                'es' => 'Español',
-            ];
-
-            $lang_flags = [
-                'nl' => '🇳🇱',
-                'en' => '🇬🇧',
-                'de' => '🇩🇪',
-                'fr' => '🇫🇷',
-                'es' => '🇪🇸',
-            ];
-            ?>
             <div class="relative ml-4 border-l border-gray-200 pl-4" id="snel-lang-switcher">
                 <button
                     type="button"
@@ -60,7 +61,7 @@
                     aria-haspopup="true"
                 >
                     <span class="text-base leading-none"><?php echo $lang_flags[$current] ?? '🌐'; ?></span>
-                    <span><?php echo esc_html($current_label); ?></span>
+                    <span><?php echo esc_html($config[$current]['label'] ?? strtoupper($current)); ?></span>
                     <svg class="w-4 h-4 opacity-50 transition-transform" id="snel-lang-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
@@ -78,14 +79,9 @@
                             $full_name = $lang_full_names[$lang] ?? $label;
                             $flag      = $lang_flags[$lang] ?? '🌐';
                             $is_active = ($lang === $current);
-                            $locale    = $config[$lang]['locale'] ?? $lang;
-                            $hreflang  = strtolower(str_replace('_', '-', $locale));
                         ?>
                             <a
                                 href="<?php echo esc_url($url); ?>"
-                                hreflang="<?php echo esc_attr($hreflang); ?>"
-                                rel="alternate"
-                                lang="<?php echo esc_attr($hreflang); ?>"
                                 class="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors <?php echo $is_active ? 'bg-gray-50 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'; ?>"
                                 role="menuitem"
                                 <?php if ($is_active) echo 'aria-current="true"'; ?>

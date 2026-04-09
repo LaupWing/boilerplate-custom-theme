@@ -185,7 +185,12 @@ function snel_run_seeder($reset = false)
             if (! empty($page['content'])) {
                 wp_update_post(['ID' => $existing->ID, 'post_content' => $page['content']]);
             }
-            snel_seed_log('[Page] ' . $page['title'] . ' — exists, updated slugs/content', 'ok');
+            if (! empty($page['titles'])) {
+                foreach ($page['titles'] as $lang => $translated_title) {
+                    update_post_meta($existing->ID, '_title_' . $lang, sanitize_text_field($translated_title));
+                }
+            }
+            snel_seed_log('[Page] ' . $page['title'] . ' — exists, updated', 'ok');
 
             if (! empty($page['is_front_page'])) {
                 $front_page_id = $existing->ID;
@@ -209,6 +214,12 @@ function snel_run_seeder($reset = false)
         if (! empty($page['slugs'])) {
             foreach ($page['slugs'] as $lang => $translated_slug) {
                 update_post_meta($post_id, '_slug_' . $lang, sanitize_title($translated_slug));
+            }
+        }
+
+        if (! empty($page['titles'])) {
+            foreach ($page['titles'] as $lang => $translated_title) {
+                update_post_meta($post_id, '_title_' . $lang, sanitize_text_field($translated_title));
             }
         }
 
@@ -264,8 +275,48 @@ function snel_run_seeder($reset = false)
             }
         }
 
+        if (! empty($post_data['titles'])) {
+            foreach ($post_data['titles'] as $lang => $translated_title) {
+                update_post_meta($post_id, '_title_' . $lang, sanitize_text_field($translated_title));
+            }
+        }
+
         $slug_info = snel_seed_slug_info($post_data['slugs'] ?? []);
         snel_seed_log('[Post] ' . $post_data['title'] . ' — created' . $slug_info, 'ok');
+    }
+
+    // Create primary menu with all pages.
+    $menu_name = 'Header Menu';
+    $menu_exists = wp_get_nav_menu_object($menu_name);
+
+    if ($menu_exists) {
+        wp_delete_nav_menu($menu_name);
+    }
+
+    $menu_id = wp_create_nav_menu($menu_name);
+
+    if (! is_wp_error($menu_id)) {
+        $position = 0;
+        foreach ($pages_config as $page) {
+            $page_obj = get_page_by_path($page['slug']);
+            if ($page_obj) {
+                $position++;
+                wp_update_nav_menu_item($menu_id, 0, [
+                    'menu-item-title'     => $page['title'],
+                    'menu-item-object'    => 'page',
+                    'menu-item-object-id' => $page_obj->ID,
+                    'menu-item-type'      => 'post_type',
+                    'menu-item-status'    => 'publish',
+                    'menu-item-position'  => $position,
+                ]);
+            }
+        }
+
+        $locations = get_theme_mod('nav_menu_locations', []);
+        $locations['primary'] = $menu_id;
+        set_theme_mod('nav_menu_locations', $locations);
+
+        snel_seed_log('Created "' . $menu_name . '" menu with ' . $position . ' items', 'ok');
     }
 
     // Flush rewrite rules so language URLs work
