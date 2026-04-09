@@ -49,7 +49,24 @@ npm run build:css
 
 Then activate theme in WordPress, visit site. You should see a blank page with Tailwind classes working.
 
-### Test checklist:
+### Automated checks (Claude Code should run these):
+
+```bash
+# PHP syntax check
+php -l functions.php
+php -l header.php
+php -l footer.php
+php -l index.php
+php -l front-page.php
+
+# CSS build must succeed
+npm run build:css
+
+# Verify output
+ls build/index.css
+```
+
+### Manual test checklist:
 - [ ] Theme activates without errors
 - [ ] Homepage renders (blank or "theme is working")
 - [ ] Tailwind classes apply (check brand colors in index.php)
@@ -139,7 +156,21 @@ npm run build:admin
 
 Then visit wp-admin — you should see "Snel Translations" in the sidebar.
 
-### Test checklist:
+### Automated checks (Claude Code should run these):
+
+```bash
+# PHP syntax check — all translation files
+find inc/translations/ -name "*.php" -exec php -l {} \;
+
+# Admin React build must succeed
+npm run build:admin
+
+# Verify output
+ls build/admin/translations/index.js
+ls build/admin/translations/index.asset.php
+```
+
+### Manual test checklist:
 - [ ] Visit site normally → default language
 - [ ] Visit `/nl/` (or non-default prefix) → language switches
 - [ ] `snel__('key')` returns translated string
@@ -151,9 +182,130 @@ Then visit wp-admin — you should see "Snel Translations" in the sidebar.
 
 ---
 
-## Phase 3: Design & Blocks
+## Phase 3: First Block + Block Components
 
-**Goal:** Convert reference design into Gutenberg blocks.
+**Goal:** Article section block works in editor with language switching and translation.
+
+### Prerequisites:
+- Phase 2 complete (translation system working)
+- `npm run build:admin` successful
+
+### Files to copy from boilerplate:
+
+**Block components (shared, DO NOT EDIT):**
+
+| File | Purpose |
+|------|---------|
+| `src/blocks/components/TranslatableWrapper.js` | Language toggle UI in block editor |
+| `src/blocks/components/BgColorControl.js` | Background color picker for blocks |
+| `src/blocks/components/lang-helpers.js` | `getLang()`, `setLang()`, `translateTexts()` |
+| `src/blocks/components/content-extractor.js` | Extracts block content for SEO/AI |
+
+**First block — Article Section:**
+
+| File | Purpose |
+|------|---------|
+| `src/blocks/article-section/block.json` | **EDIT** — update default language keys to match project |
+| `src/blocks/article-section/index.js` | Block registration (DO NOT EDIT) |
+| `src/blocks/article-section/edit.js` | Editor UI (DO NOT EDIT) |
+| `src/blocks/article-section/render.php` | Frontend output (DO NOT EDIT) |
+
+**Editor sidebar:**
+
+| File | Purpose |
+|------|---------|
+| `src/editor/snelstack/index.js` | Snel Stack panel — translated titles + block translations |
+
+### Customize per project:
+
+1. **`block.json` attribute defaults** — change `{"nl": "", "en": ""}` to match your languages (e.g. `{"en": "", "nl": "", "es": ""}`)
+2. **`edit.js` source language** — if default language is not `nl`, update `getLang(tagline, 'nl')` to your default lang code in the `handleTranslate` function
+
+### Build & test:
+
+```bash
+npm run build    # builds CSS + blocks + admin + editor
+```
+
+### Automated checks (Claude Code should run these):
+
+```bash
+# PHP syntax check — all files must pass
+find inc/ -name "*.php" -exec php -l {} \;
+
+# Build must succeed without errors
+npm run build
+
+# Verify build output exists
+ls build/blocks/article-section/block.json
+ls build/editor/snelstack/index.js
+ls build/index.css
+```
+
+### Manual test checklist:
+- [ ] Article Section appears in block inserter under "Snel" category
+- [ ] Language toggle shows in block toolbar
+- [ ] Typing in EN, switching to NL shows empty fields (separate per language)
+- [ ] "Translate" button translates content via AI
+- [ ] Frontend renders correct language based on URL
+- [ ] Snel Stack sidebar panel shows in editor
+
+---
+
+## Phase 4: Seeding
+
+**Goal:** Demo pages with translated content for testing the full system.
+
+### Files to create:
+
+| File | Purpose |
+|------|---------|
+| `inc/seeders/seeder.php` | Admin page under Tools > Seed Content |
+| `inc/seeders/seed-pages.php` | **EDIT** — page definitions with translated content |
+
+### Update functions.php:
+
+```php
+if (is_admin()) {
+    // ... existing admin requires ...
+    require get_template_directory() . '/inc/seeders/seeder.php';
+}
+```
+
+### What the seeder creates:
+- Pages (Home, About, Contact, etc.) with article-section blocks
+- Translated content pre-filled for all languages
+- Homepage set automatically
+- Translated titles stored in `_title_{lang}` meta
+
+### Test checklist:
+- [ ] Tools > Seed Content page appears in admin
+- [ ] Clicking "Seed" creates pages
+- [ ] Pages have article-section blocks with content
+- [ ] Visiting `/nl/` or `/es/` shows translated content
+- [ ] Homepage is set correctly
+
+---
+
+## Phase 5: Header, Footer & Language Switcher
+
+**Goal:** Full navigation with language switching on frontend.
+
+*Coming soon — add as we build it.*
+
+---
+
+## Phase 6: Design Conversion
+
+**Goal:** Convert reference design (Next.js/Figma) into custom blocks.
+
+*Coming soon — add as we build it.*
+
+---
+
+## Phase 7: SEO & Deployment
+
+**Goal:** Snel SEO plugin integrated, production-ready.
 
 *Coming soon — add as we build it.*
 
