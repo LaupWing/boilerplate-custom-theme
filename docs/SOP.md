@@ -394,9 +394,59 @@ ls build/index.css
 
 ## Phase 6: Design Conversion
 
-**Goal:** Convert reference design (Next.js/Figma) into custom blocks.
+**Goal:** Convert reference design (Next.js/Figma) into WordPress theme.
 
-*Coming soon — add as we build it.*
+### Step 1: Update seed data to match design
+- Update `seed-pages.php` to match the pages in the design
+- Update menu items in seeder to match nav links
+- Update `translations.php` to match new nav labels
+- Reset & reseed to apply changes
+
+### Step 2: Set brand colors and fonts
+- Extract colors from the design's CSS/globals (look for CSS variables, Tailwind config, or globals.css)
+- Update `src/shared/theme.css` with project-specific color tokens
+- Update `src/index.css` base layer to use new color tokens
+- Update Google Fonts URL in `functions.php` (both frontend enqueue AND `add_editor_style()`)
+- Rebuild CSS: `npm run build:css`
+
+**IMPORTANT:** Update fonts in TWO places:
+1. `locnguyen_scripts()` — frontend Google Fonts enqueue
+2. `locnguyen_setup()` — `add_editor_style()` for block editor
+
+### Step 3: Convert header/navbar
+- Study the design's navbar component (layout, logo, nav items, actions)
+- Update `header.php` to match the design
+- Keep `snel_url()` for links, `snel__()` for translations, `snel_lang_url()` for language switcher
+- Rebuild CSS after adding new Tailwind classes
+
+### Step 4: Convert footer
+- Update `footer.php` to match the design
+- Keep translated strings via `snel__()`
+
+### Step 5: Convert page components to blocks
+- Each major section in the design becomes a Gutenberg block
+- Follow the article-section pattern: `block.json` + `index.js` + `edit.js` + `render.php`
+- Use `TranslatableWrapper` for all translatable content
+- Update `block.json` defaults to match project languages
+
+### Automated checks (Claude Code should run these):
+```bash
+# Rebuild CSS after theme changes
+npm run build:css
+
+# Rebuild blocks if new blocks added
+npm run build
+
+# Verify CSS output
+ls build/index.css
+```
+
+### Manual test checklist:
+- [ ] Background color matches design
+- [ ] Fonts render correctly (check both frontend and editor)
+- [ ] Nav links and language switcher work
+- [ ] Responsive layout matches design (mobile + desktop)
+- [ ] Colors consistent across all pages
 
 ---
 
