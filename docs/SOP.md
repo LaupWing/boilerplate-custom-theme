@@ -281,18 +281,56 @@ if (is_admin()) {
 }
 ```
 
-### What the seeder creates:
-- Pages (Home, About, Contact, etc.) with article-section blocks
-- Translated content pre-filled for all languages
-- Homepage set automatically
+### Seeder supports:
+- Pages and blog posts
+- Article-section blocks with translated content per language
 - Translated titles stored in `_title_{lang}` meta
+- Translated slugs stored in `_slug_{lang}` meta
+- Homepage set automatically via `is_front_page` flag
+- Reset & reseed option (deletes all existing pages/posts first)
+- Status table showing current pages/posts with slug translations
 
-### Test checklist:
+### Seed data files:
+- **`seed-pages.php`** — returns array of page definitions. Use `locnguyen_seed_article()` helper (or create your own) to generate article-section block markup with translations.
+- **`seed-posts.php`** — returns array of blog post definitions. Plain Gutenberg blocks (paragraphs, headings). Add `titles` key for translated post titles.
+
+### Each seed item structure:
+```php
+[
+    'title'         => 'Page Title',          // Default language title
+    'slug'          => 'page-slug',           // WordPress slug
+    'titles'        => ['nl' => '...', 'es' => '...'],  // Translated titles
+    'slugs'         => ['nl' => '...', 'es' => '...'],  // Translated slugs (optional)
+    'content'       => '<!-- wp:snel/article-section ... /-->',
+    'is_front_page' => true,                  // Only one page should have this
+]
+```
+
+### Update functions.php:
+```php
+if (is_admin()) {
+    // ... existing admin requires ...
+    require get_template_directory() . '/inc/seeders/seeder.php';
+}
+```
+
+### Automated checks (Claude Code should run these):
+```bash
+# PHP syntax check
+php -l inc/seeders/seeder.php
+php -l inc/seeders/seed-pages.php
+php -l inc/seeders/seed-posts.php
+```
+
+### Manual test checklist:
 - [ ] Tools > Seed Content page appears in admin
-- [ ] Clicking "Seed" creates pages
+- [ ] Clicking "Seed" creates pages and posts
 - [ ] Pages have article-section blocks with content
+- [ ] Blog posts created with translated titles
+- [ ] Homepage is set correctly (Settings > Reading shows static page)
 - [ ] Visiting `/nl/` or `/es/` shows translated content
-- [ ] Homepage is set correctly
+- [ ] "Reset & Reseed" deletes and recreates everything
+- [ ] Flush permalinks: Settings > Permalinks > Save
 
 ---
 
