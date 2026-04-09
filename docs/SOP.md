@@ -336,9 +336,59 @@ php -l inc/seeders/seed-posts.php
 
 ## Phase 5: Header, Footer & Language Switcher
 
-**Goal:** Full navigation with language switching on frontend.
+**Goal:** Full navigation with language switching, blog listing, all templates working.
 
-*Coming soon — add as we build it.*
+### Files to create/update:
+
+| File | Purpose |
+|------|---------|
+| `header.php` | Nav links using `snel_url()`, language switcher using `snel_lang_url()` |
+| `footer.php` | Footer with translated copyright text |
+| `page.php` | Generic page template (renders block content) |
+| `single.php` | Single post template with `snel_title()` |
+| `index.php` | Blog listing with translated titles and "Read more" |
+
+### Important notes:
+
+**Google Fonts in editor:** Add `add_editor_style()` with your Google Fonts URL in the theme setup function. Without this, the block editor won't show the correct fonts.
+
+```php
+add_editor_style('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+```
+
+**Blog page:** The seeder should create a Blog page with `'is_blog_page' => true`. The seeder sets `page_for_posts` option so WordPress uses it for the post listing. Add this to `seed-pages.php`.
+
+**Nav links:** Use `snel_url('/slug/')` for all internal links. Use `snel__('Text')` for translatable nav labels. Use `snel_lang_url($lang)` for language switcher links.
+
+**Translated titles:** Use `snel_title()` instead of `get_the_title()` in templates — it checks `_title_{lang}` meta and falls back to the original title.
+
+### Automated checks (Claude Code should run these):
+
+```bash
+# PHP lint all templates
+php -l header.php
+php -l footer.php
+php -l page.php
+php -l single.php
+php -l index.php
+
+# Rebuild CSS (new templates may add Tailwind classes)
+npm run build:css
+
+# Verify output
+ls build/index.css
+```
+
+### Manual test checklist:
+- [ ] Header shows nav links and language switcher
+- [ ] Clicking EN/NL/ES switches language in URL
+- [ ] Nav text translates per language
+- [ ] Footer copyright text translates
+- [ ] Homepage renders block content
+- [ ] About/Training/Contact pages render block content
+- [ ] Blog page shows post listing with translated titles
+- [ ] Single post page shows translated title and content
+- [ ] "Read more" and "Back" text translates
 
 ---
 
