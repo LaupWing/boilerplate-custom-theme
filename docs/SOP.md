@@ -90,12 +90,42 @@ Then activate theme in WordPress, visit site. You should see a blank page with T
 
 ```php
 // Add after ABSPATH check:
+
+// OpenAI helpers — REQUIRED before translation system and admin icons.
+if (! function_exists('snelstack_get_openai_key')) {
+    function snelstack_get_openai_key() {
+        $key = get_option('snelstack_openai_key', '');
+        if ($key) return $key;
+        if (defined('SNEL_OPENAI_API_KEY') && constant('SNEL_OPENAI_API_KEY')) return constant('SNEL_OPENAI_API_KEY');
+        return get_option('snel_openai_api_key', '');
+    }
+}
+if (! function_exists('snelstack_get_openai_model')) {
+    function snelstack_get_openai_model() {
+        return get_option('snelstack_openai_model', get_option('snel_openai_model', 'gpt-4o-mini'));
+    }
+}
+
+// Translation system
 require get_template_directory() . '/inc/translations/language.php';
 
 if (is_admin()) {
     require get_template_directory() . '/inc/translations/admin/admin-translations.php';
 }
+
+// Auto-load admin modules (icons, etc.)
+foreach (glob(get_template_directory() . '/inc/admin/*/index.php') as $module_file) {
+    require_once $module_file;
+}
 ```
+
+**IMPORTANT:** The `snelstack_get_openai_key()` and `snelstack_get_openai_model()` functions MUST be defined before loading any modules that use them (translations, admin icons, SEO). Without these, the Snelstack Settings page and AI features will fatal error.
+
+### Also copy:
+
+| File/Dir | Purpose |
+|----------|---------|
+| `inc/admin/snelstack/index.php` | Admin icon system + Snelstack Settings page |
 
 ### Update package.json:
 
