@@ -198,8 +198,17 @@ ls build/admin/translations/index.asset.php
 |------|---------|
 | `src/blocks/components/TranslatableWrapper.js` | Language toggle UI in block editor |
 | `src/blocks/components/BgColorControl.js` | Background color picker for blocks |
+| `src/blocks/components/InspectorOptions.js` | Shared inspector panel options |
 | `src/blocks/components/lang-helpers.js` | `getLang()`, `setLang()`, `translateTexts()` |
 | `src/blocks/components/content-extractor.js` | Extracts block content for SEO/AI |
+
+**Shared CSS (IMPORTANT — blocks won't compile without these):**
+
+| File | Purpose |
+|------|---------|
+| `src/shared/editor-theme.css` | Block editor styles for translatable blocks |
+
+**NOTE:** TranslatableWrapper.js imports `editor-theme.css` and `InspectorOptions.js`. If you get "Module not found" errors during build, you're missing one of these files. Always copy ALL files from `src/blocks/components/` and `src/shared/`.
 
 **First block — Article Section:**
 
