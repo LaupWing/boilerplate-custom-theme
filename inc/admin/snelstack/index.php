@@ -144,12 +144,12 @@ add_action( 'admin_init', function () {
 /**
  * Get the OpenAI model from Snelstack settings.
  */
-function snelstack_get_openai_model() {
-    $model = get_option( 'snelstack_openai_model', '' );
-    if ( $model ) return $model;
-
-    // Fallback to legacy option
-    return get_option( 'snel_openai_model', 'gpt-4o-mini' );
+if ( ! function_exists( 'snelstack_get_openai_model' ) ) {
+    function snelstack_get_openai_model() {
+        $model = get_option( 'snelstack_openai_model', '' );
+        if ( $model ) return $model;
+        return get_option( 'snel_openai_model', 'gpt-4o-mini' );
+    }
 }
 
 /**
