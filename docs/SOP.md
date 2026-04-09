@@ -60,9 +60,64 @@ Then activate theme in WordPress, visit site. You should see a blank page with T
 
 ## Phase 2: Translation System
 
-**Goal:** Multilingual routing works, language switcher renders.
+**Goal:** Multilingual routing works, admin translations page available.
 
-*Coming soon — add as we build it.*
+### Files to copy from boilerplate:
+
+| File/Dir | Purpose |
+|----------|---------|
+| `inc/translations/config/languages.php` | **EDIT** — set your project's languages |
+| `inc/translations/config/slugs-cpt.php` | CPT slug translations (empty if not needed) |
+| `inc/translations/core/LocaleManager.php` | Language detection from URL (DO NOT EDIT) |
+| `inc/translations/core/Router.php` | Rewrite rules (DO NOT EDIT) |
+| `inc/translations/core/Translator.php` | String lookups, multilingual values (DO NOT EDIT) |
+| `inc/translations/urls/UrlGenerator.php` | Language-aware URL builder (DO NOT EDIT) |
+| `inc/translations/seo/SeoManager.php` | hreflang, html lang (DO NOT EDIT) |
+| `inc/translations/language.php` | Entry point, loads everything, helper functions (DO NOT EDIT) |
+| `inc/translations/translations.php` | **EDIT** — default theme string translations |
+| `inc/translations/auto-translate.php` | AI auto-translate titles on publish (DO NOT EDIT) |
+| `inc/translations/admin/translate.php` | AJAX endpoint for AI translation (DO NOT EDIT) |
+| `inc/translations/admin/admin-translations.php` | Admin translations page (DO NOT EDIT) |
+| `src/admin/translations/` | React admin UI (copy entire directory) |
+
+### Customize per project:
+
+1. **`config/languages.php`** — set languages and default
+2. **`translations.php`** — add theme strings (keys in default language)
+3. **`language.php`** — update `auto-slug.php` reference to `auto-translate.php` if needed
+
+### Update functions.php:
+
+```php
+// Add after ABSPATH check:
+require get_template_directory() . '/inc/translations/language.php';
+
+if (is_admin()) {
+    require get_template_directory() . '/inc/translations/admin/admin-translations.php';
+}
+```
+
+### Update package.json:
+
+Add `build:admin` and `start:admin` scripts for React compilation.
+
+### Install & test:
+
+```bash
+npm run build:admin
+```
+
+Then visit wp-admin — you should see "Snel Translations" in the sidebar.
+
+### Test checklist:
+- [ ] Visit site normally → default language
+- [ ] Visit `/nl/` (or non-default prefix) → language switches
+- [ ] `snel__('key')` returns translated string
+- [ ] Admin sidebar shows "Snel Translations"
+- [ ] Theme strings tab shows all strings from translations.php
+- [ ] Menu tab shows navigation items
+- [ ] Settings page works (API key, model selection)
+- [ ] Flush permalinks: Settings > Permalinks > Save
 
 ---
 
