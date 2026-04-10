@@ -16,10 +16,10 @@ import { BG_EDITOR_STYLES } from './BgColorControl';
 import InspectorOptions from './InspectorOptions';
 import '../../shared/editor-theme.css';
 
-const LANGS = [
-	{ code: 'nl', label: 'NL' },
-	{ code: 'en', label: 'EN' },
-];
+const LANGS = (window.snelTranslate?.langs || ['en', 'nl']).map((code) => ({
+	code,
+	label: code.toUpperCase(),
+}));
 
 const LAYOUT_WIDTH_CLASSES = {
 	wide: 'max-w-6xl mx-auto px-4 sm:px-6 lg:px-8',
@@ -27,7 +27,7 @@ const LAYOUT_WIDTH_CLASSES = {
 };
 
 export default function TranslatableWrapper({ blockProps, label, subtitle, onTranslate, attributes, setAttributes, fullWidth, children }) {
-	const [currentLang, setCurrentLang] = useState('nl');
+	const [currentLang, setCurrentLang] = useState(window.snelTranslate?.default || 'en');
 	const [isTranslating, setIsTranslating] = useState(false);
 	const [buttonState, setButtonState] = useState(null);
 	const [animStyle, setAnimStyle] = useState({});

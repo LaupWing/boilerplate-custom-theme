@@ -25,6 +25,7 @@ These are things that break if you do them the "obvious" way:
 - **Content blocks:** Add `data-seo-content` to the outer `<section>` in `render.php`. Layout blocks (topbar, navbar, footer) should NOT have this.
 - **SEO plugin hooks:** Theme must provide `snel_seo_languages` and `snel_seo_current_language` filters in `inc/translations/language.php`.
 - **Fonts in 3 places:** Frontend enqueue, `src/editor.css`, and `src/shared/theme.css` CSS variables.
+- **TranslatableWrapper languages:** NEVER hardcode languages in `TranslatableWrapper.js`. It reads from `window.snelTranslate.langs` and `window.snelTranslate.default` which come from the language config. If you see hardcoded `['nl', 'en']` or `useState('nl')`, it's wrong.
 
 ## Key Helpers
 - `snel_business('logo_url')` — logo from Business Info settings, falls back to `assets/images/`
