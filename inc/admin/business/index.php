@@ -16,7 +16,6 @@ function snel_business_defaults() {
     return [
         'name'           => '',
         'logo_id'        => '',
-        'logo_inverted_id' => '',
         'email'          => '',
         'instagram_url'  => '',
         'x_url'          => '',
@@ -56,20 +55,6 @@ function snel_business($key) {
         $local = get_template_directory() . '/assets/images/logo-ln-original.png';
         if (file_exists($local)) {
             return get_template_directory_uri() . '/assets/images/logo-ln-original.png';
-        }
-        return '';
-    }
-
-    // Special key: logo_inverted_url for dark backgrounds.
-    if ($key === 'logo_inverted_url') {
-        $logo_id = $settings['logo_inverted_id'] ?? '';
-        if ($logo_id) {
-            $url = wp_get_attachment_image_url(absint($logo_id), 'medium');
-            if ($url) return $url;
-        }
-        $local = get_template_directory() . '/assets/images/logo-ln-inverted.png';
-        if (file_exists($local)) {
-            return get_template_directory_uri() . '/assets/images/logo-ln-inverted.png';
         }
         return '';
     }
@@ -127,17 +112,6 @@ function snel_business_settings_render() {
         }
     }
 
-    $logo_inverted_url = '';
-    if (!empty($settings['logo_inverted_id'])) {
-        $logo_inverted_url = wp_get_attachment_image_url(absint($settings['logo_inverted_id']), 'medium');
-    }
-    if (!$logo_inverted_url) {
-        $local = get_template_directory() . '/assets/images/logo-ln-inverted.png';
-        if (file_exists($local)) {
-            $logo_inverted_url = get_template_directory_uri() . '/assets/images/logo-ln-inverted.png';
-        }
-    }
-
     $fields = [
         'General' => [
             'name'  => ['label' => __('Brand name', 'snel'), 'placeholder' => 'Loc Nguyen'],
@@ -178,25 +152,6 @@ function snel_business_settings_render() {
                         <button type="button" id="snel-logo-upload" class="button"><?php esc_html_e('Select Logo', 'snel'); ?></button>
                         <button type="button" id="snel-logo-remove" class="button" <?php echo empty($settings['logo_id']) ? 'style="display:none;"' : ''; ?>><?php esc_html_e('Remove', 'snel'); ?></button>
                         <p class="description"><?php esc_html_e('Used in the header. Falls back to assets/images/logo-ln-original.png.', 'snel'); ?></p>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Inverted Logo -->
-            <h2 style="margin-top: 24px;"><?php esc_html_e('Logo (dark background)', 'snel'); ?></h2>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><label><?php esc_html_e('Inverted logo', 'snel'); ?></label></th>
-                    <td>
-                        <div id="snel-logo-inv-preview" style="margin-bottom: 10px; background: #1a1a1a; padding: 12px; border-radius: 6px; display: inline-block;">
-                            <?php if ($logo_inverted_url) : ?>
-                                <img src="<?php echo esc_url($logo_inverted_url); ?>" style="max-width: 200px; max-height: 80px; display: block;">
-                            <?php endif; ?>
-                        </div>
-                        <input type="hidden" id="snel_business_logo_inverted_id" name="snel_business[logo_inverted_id]" value="<?php echo esc_attr($settings['logo_inverted_id']); ?>">
-                        <button type="button" id="snel-logo-inv-upload" class="button"><?php esc_html_e('Select Logo', 'snel'); ?></button>
-                        <button type="button" id="snel-logo-inv-remove" class="button" <?php echo empty($settings['logo_inverted_id']) ? 'style="display:none;"' : ''; ?>><?php esc_html_e('Remove', 'snel'); ?></button>
-                        <p class="description"><?php esc_html_e('Used in the footer / dark sections. Falls back to assets/images/logo-ln-inverted.png.', 'snel'); ?></p>
                     </td>
                 </tr>
             </table>
@@ -255,7 +210,6 @@ function snel_business_settings_render() {
         }
 
         logoUploader('#snel-logo-upload', '#snel-logo-remove', '#snel_business_logo_id', '#snel-logo-preview', false);
-        logoUploader('#snel-logo-inv-upload', '#snel-logo-inv-remove', '#snel_business_logo_inverted_id', '#snel-logo-inv-preview', true);
     });
     </script>
     <?php
