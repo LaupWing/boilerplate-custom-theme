@@ -350,10 +350,21 @@ php -l inc/seeders/seed-posts.php
 
 ### Important notes:
 
-**Google Fonts in editor:** Add `add_editor_style()` with your Google Fonts URL in the theme setup function. Without this, the block editor won't show the correct fonts.
+**Google Fonts in editor:** Create `src/editor.css` with an `@import` for Google Fonts and `.editor-styles-wrapper` font rules. Then load it via `add_editor_style('src/editor.css')` in theme setup. Do NOT use `add_editor_style()` with an external Google Fonts URL directly — it doesn't load in the editor iframe.
+
+```css
+/* src/editor.css */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.editor-styles-wrapper {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1a1a1a;
+}
+```
 
 ```php
-add_editor_style('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+// In theme setup:
+add_editor_style('src/editor.css');
 ```
 
 **Blog page:** The seeder should create a Blog page with `'is_blog_page' => true`. The seeder sets `page_for_posts` option so WordPress uses it for the post listing. Add this to `seed-pages.php`.
@@ -409,9 +420,10 @@ ls build/index.css
 - Update Google Fonts URL in `functions.php` (both frontend enqueue AND `add_editor_style()`)
 - Rebuild CSS: `npm run build:css`
 
-**IMPORTANT:** Update fonts in TWO places:
-1. `locnguyen_scripts()` — frontend Google Fonts enqueue
-2. `locnguyen_setup()` — `add_editor_style()` for block editor
+**IMPORTANT:** Update fonts in THREE places:
+1. `projectname_scripts()` — frontend Google Fonts enqueue via `wp_enqueue_style`
+2. `src/editor.css` — `@import` Google Fonts + `.editor-styles-wrapper` font-family
+3. `src/shared/theme.css` — `--font-sans` and `--font-mono` CSS variables
 
 ### Step 3: Convert header/navbar
 - Study the design's navbar component (layout, logo, nav items, actions)

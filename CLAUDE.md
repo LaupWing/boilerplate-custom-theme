@@ -60,6 +60,15 @@ When a post/page is published and the `_title_{lang}` meta fields are empty, the
 | `inc/translations/config/slugs-cpt.php` | CPT archive slug translations (edit per project) |
 | `inc/translations/translations.php` | Default theme string translations (edit per project) |
 
+## Editor Fonts
+Google Fonts don't load in the Gutenberg editor via `add_editor_style()` with an external URL. Instead:
+1. Create `src/editor.css` with `@import url('https://fonts.googleapis.com/css2?family=...')` and `.editor-styles-wrapper` font-family rules
+2. Load it via `add_editor_style('src/editor.css')` in theme setup (before `build/index.css`)
+3. Do NOT set `background` on `.editor-styles-wrapper` — let the editor keep its default white
+
+## Business Info
+`inc/admin/business/index.php` provides `snel_business()` helper for brand name, email, logo, and social links. Auto-loaded via `inc/admin/*/index.php` glob. Logo falls back to `assets/images/logo-*.svg` or `.png` when no upload is set. Use `snel_business('logo_url')` in header, and add Tailwind `invert` class for dark backgrounds (footer).
+
 ## Project Overview
 - Boilerplate WordPress theme for starting new client projects.
 - Base framework with multilingual system, SEO, Tailwind CSS, and custom Gutenberg blocks.
