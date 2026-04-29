@@ -34,4 +34,5 @@ These are things that break if you do them the "obvious" way:
 - `snel_url('/path/')` — language-aware URL
 - `snel_attr($attributes, 'key')` — get translated block attribute for current language
 - `snel_title()` — translated post title (checks `_title_{lang}` meta)
+- `snel_excerpt()` — translated post excerpt (checks `_excerpt_{lang}` meta, falls back to `post_excerpt`)
 - Footer logo: same `snel_business('logo_url')` with Tailwind `invert` class
