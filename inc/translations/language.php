@@ -215,6 +215,20 @@ function snel_title($post_id = null)
     return Translator::productTitle($post_id);
 }
 
+function snel_excerpt($post_id = null)
+{
+    if (! $post_id) $post_id = get_the_ID();
+    $lang    = snel_get_lang();
+    $default = snel_get_default_lang();
+
+    if ($lang !== $default) {
+        $translated = get_post_meta($post_id, '_excerpt_' . $lang, true);
+        if (! empty($translated)) return $translated;
+    }
+
+    return get_the_excerpt($post_id);
+}
+
 /**
  * Get a translated value from a CPT post meta field.
  * Handles both {nl, en, de} arrays and plain values.
