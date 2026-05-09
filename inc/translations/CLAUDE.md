@@ -15,7 +15,7 @@ core/
 urls/
   UrlGenerator.php        # Build language-aware URLs
 seo/
-  SeoManager.php          # hreflang, canonical, html lang, title, meta desc
+  SeoManager.php          # hreflang, canonical, title, meta desc (html lang is handled by Snel SEO plugin)
 admin/
   admin-translations.php  # Admin page for managing translations
   AdminMetaBox.php        # Post editor meta box: slug, title, meta desc per lang
@@ -63,8 +63,10 @@ Default language values live in WP core fields (`post_title`, `term.name`), NOT 
 ## Snel SEO Integration
 
 Two filters connect to the Snel SEO plugin:
-- `snel_seo_languages` — provides language list
-- `snel_seo_current_language` — provides current language
+- `snel_seo_languages` — provides language list. **Each entry must include `locale`** (e.g. `'nl_NL'`) so the plugin can output the correct `<html lang="nl-NL">` attribute. Without `locale`, the plugin falls back to the language code only.
+- `snel_seo_current_language` — provides current language code
+
+`<html lang="...">` output lives in the **plugin** (`snel-seo/inc/head-output.php`), NOT the theme. Do not add a `language_attributes` filter in the theme — it would conflict with the plugin's filter.
 
 ## Rules
 

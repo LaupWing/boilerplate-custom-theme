@@ -284,6 +284,7 @@ add_filter( 'snel_seo_languages', function () {
             'code'    => $code,
             'label'   => $lang['label'],
             'default' => ! empty( $lang['default'] ),
+            'locale'  => $lang['locale'] ?? $code,
         );
     }
     return $result;

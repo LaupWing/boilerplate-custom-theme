@@ -4,11 +4,15 @@
  * Manages SEO output for multilingual pages.
  *
  * Responsible for:
- * - Setting the correct <html lang=""> attribute
  * - Outputting hreflang tags (tells Google about language variants)
  * - Outputting a language-aware canonical URL
  * - Translating the document <title> tag
  * - Outputting a translated meta description
+ *
+ * NOTE: <html lang="..."> is handled by the Snel SEO plugin
+ * (see plugin's inc/head-output.php). The theme provides the locale
+ * to the plugin via the `snel_seo_languages` filter in language.php
+ * (each entry must include a `locale` field).
  *
  * @package Snel
  */
@@ -24,7 +28,6 @@ class SeoManager
      */
     public static function register(): void
     {
-        add_filter('language_attributes', [self::class, 'htmlLangAttribute']);
         add_action('wp_head', [self::class, 'hreflangTags']);
 
         // Replace WordPress's default canonical with our language-aware one.
@@ -33,27 +36,6 @@ class SeoManager
 
         add_filter('document_title_parts', [self::class, 'translateDocumentTitle']);
         add_action('wp_head', [self::class, 'metaDescription'], 1);
-    }
-
-    /**
-     * Override the <html lang=""> attribute to match the current visitor language.
-     *
-     * Without this, WordPress always outputs the site's default locale (e.g., nl-NL)
-     * even when the visitor is viewing /en/about-us/.
-     *
-     * @param string $output The current language_attributes output.
-     * @return string
-     */
-    public static function htmlLangAttribute(string $output): string
-    {
-        $lang   = LocaleManager::current();
-        $config = LocaleManager::config();
-        $locale = $config[$lang]['locale'] ?? $lang;
-
-        // Convert locale format: nl_NL → nl-NL (HTML uses hyphens)
-        $html_lang = str_replace('_', '-', $locale);
-
-        return preg_replace('/lang="[^"]*"/', 'lang="' . esc_attr($html_lang) . '"', $output);
     }
 
     /**
