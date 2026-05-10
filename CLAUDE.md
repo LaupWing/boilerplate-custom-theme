@@ -26,6 +26,7 @@ These are things that break if you do them the "obvious" way:
 - **SEO plugin hooks:** Theme must provide `snel_seo_languages` and `snel_seo_current_language` filters in `inc/translations/language.php`.
 - **Fonts in 3 places:** Frontend enqueue, `src/editor.css`, and `src/shared/theme.css` CSS variables.
 - **TranslatableWrapper languages:** NEVER hardcode languages in `TranslatableWrapper.js`. It reads from `window.snelTranslate.langs` and `window.snelTranslate.default` which come from the language config. If you see hardcoded `['nl', 'en']` or `useState('nl')`, it's wrong.
+- **Snel admin menu icons:** Plain `add_menu_page()` icons get recolored by WP's `svg-painter.js` (gradients become flat). Use the theme's `snelstack_get_admin_icons()` array — or the `snel_admin_icons` filter from a plugin — for branded gradient icons. See `docs/snel-admin-icons.md`.
 
 ## Key Helpers
 - `snel_business('logo_url')` — logo from Business Info settings, falls back to `assets/images/`

@@ -1,16 +1,49 @@
 # Snel Admin Menu Icons
 
-## How It Works
+## Why this exists
 
-WordPress applies a CSS filter to admin menu icons, making them monochrome. The Snel Stack theme overrides this with custom CSS + JavaScript that replaces the default `<img>` tag with a branded gradient circle + white SVG icon.
+WordPress's `wp-includes/js/svg-painter.js` recolors all admin menu SVG icons to match the admin color scheme. For SVGs with gradients/defs, it strips them and rewrites every `fill` to a single solid color — the icon flashes correct on page load, then turns white. svg-painter is a core WP feature, not a bug. We work around it.
 
-**File:** `inc/admin/snelstack/index.php`
+## How it works
 
-## Adding a New Icon
+The theme renders a branded gradient circle + white SVG outline in place of WP's recolored icon. One PHP function holds all icon data; CSS selectors and JS replacement are generated from it dynamically.
 
-### Step 1: Register your menu page with any icon
+**File:** `inc/admin/snelstack/index.php` — function `snelstack_get_admin_icons()`.
 
-In your plugin's `add_menu_page()`, use a base64 SVG as a fallback. It won't be visible — the JS replaces it — but WordPress needs something here.
+## Adding a new icon
+
+### Option A — Edit the theme array (1 line)
+
+Open `inc/admin/snelstack/index.php`, add an entry to `snelstack_get_admin_icons()`:
+
+```php
+return apply_filters( 'snel_admin_icons', array(
+    'snel-seo'          => '<svg ...>...</svg>',
+    'snel-translations' => '<svg ...>...</svg>',
+    'snel-newsletter'   => '<svg ...>...</svg>',
+    'snel-myplugin'     => '<svg ...>...</svg>',  // ← add this
+    'snelstack'         => '<svg ...>...</svg>',
+) );
+```
+
+The CSS selectors, the JS `querySelectorAll`, and the icon map all derive from the array keys. No other edits needed.
+
+### Option B — From the plugin itself (no theme edits)
+
+Plugins can register their own icon via the `snel_admin_icons` filter:
+
+```php
+add_filter( 'snel_admin_icons', function ( $icons ) {
+    $icons['snel-myplugin'] = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">YOUR PATHS</svg>';
+    return $icons;
+} );
+```
+
+The slug **must match** the 4th argument of the plugin's `add_menu_page()` call.
+
+## Plugin-side registration
+
+In your plugin's `add_menu_page()`, pass any placeholder icon (it gets replaced at runtime):
 
 ```php
 add_menu_page(
@@ -19,82 +52,29 @@ add_menu_page(
     'manage_options',
     'snel-myplugin',
     'render_callback',
-    'dashicons-admin-generic', // fallback, gets replaced
+    'dashicons-admin-generic', // placeholder, gets replaced by the theme
     28
 );
 ```
 
-### Step 2: Add your SVG to the JS icon map
-
-In `inc/admin/snelstack/index.php`, find the `snelIcons` object and add your entry:
-
-```js
-var snelIcons = {
-    "snel-seo": '...existing...',
-    "snel-translations": '...existing...',
-    "snel-newsletter": '...existing...',
-    "snel-myplugin": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">YOUR PATHS HERE</svg>',
-    "snelstack": '...existing...'
-};
-```
-
-**Key:** must match the slug from `add_menu_page()` (the 4th parameter).
-
-### Step 3: Add your slug to the CSS selectors (3 places)
-
-Find each CSS selector block and add your line:
-
-```css
-/* 1. Flex + overflow */
-#adminmenu .toplevel_page_snel-myplugin .wp-menu-image {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background-image: none !important;
-}
-
-/* 2. Position relative */
-#adminmenu .toplevel_page_snel-myplugin {
-    position: relative;
-    z-index: 1;
-}
-
-/* 3. Hide br */
-#adminmenu .toplevel_page_snel-myplugin .wp-menu-image br {
-    display: none;
-}
-```
-
-### Step 4: Add your slug to the JS querySelector
-
-```js
-document.querySelectorAll(
-    "#adminmenu .toplevel_page_snel-seo .wp-menu-image," +
-    "#adminmenu .toplevel_page_snel-myplugin .wp-menu-image," +  // add this
-    "#adminmenu .toplevel_page_snelstack .wp-menu-image"
-)
-```
-
-## SVG Guidelines
+## SVG guidelines
 
 - **ViewBox:** `0 0 24 24` (Lucide icon standard)
 - **Stroke:** `#fff`, width `2` (or `1.5` for filled icons)
-- **Fill:** `none` for stroke icons, `#fff` for solid icons
-- **Size:** The CSS scales it to 14x14px inside a 22x22px gradient circle
-- **Source:** Use icons from [Lucide](https://lucide.dev) — copy the SVG markup directly
+- **Fill:** `none` for stroke icons, `#fff` for solid
+- **Size:** CSS scales it to 14×14 inside a 22×22 gradient circle
+- **Source:** [Lucide](https://lucide.dev) — copy the SVG markup directly
 
-## Active State
+## Active state
 
-When a menu item is active (current page), the JS automatically:
-- Adds `is-active` class (removes static gradient background)
-- Injects a `snel-gradient-ring` element (animated rainbow conic-gradient that spins)
+When the menu item is the current page, the JS:
+- Adds `is-active` class (removes the static gradient background)
+- Injects a `snel-gradient-ring` element — animated rainbow conic-gradient that spins
 
-No extra work needed — this happens for all registered Snel icons.
+Automatic for all registered Snel icons; no extra work.
 
 ## Checklist
 
-- [ ] Menu page registered with slug starting with `snel-`
-- [ ] SVG added to `snelIcons` object (key = slug)
-- [ ] CSS selector added in 3 places (`.wp-menu-image`, `<li>`, `br`)
-- [ ] JS `querySelectorAll` updated with new selector
+- [ ] Plugin's `add_menu_page()` slug starts with `snel-` (or is `snelstack`)
+- [ ] SVG added to `snelstack_get_admin_icons()` (theme) **or** registered via `snel_admin_icons` filter (plugin)
+- [ ] Slug used as the array key matches the 4th arg of `add_menu_page()`
