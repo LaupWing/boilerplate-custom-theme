@@ -8,6 +8,7 @@
 @source "../../template-parts";
 @source "../../*.php";
 @source "../../assets/js";
+@source "../../docs/cf7-form-markup.txt";
 
 @theme {
   /* Replace these with your project's brand colors */
